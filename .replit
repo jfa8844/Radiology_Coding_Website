@@ -1,0 +1,8 @@
+# This tells Replit what command to execute when you click the "Run" button.
+# "npm start" runs the "start" script from your package.json file.
+run = "npm start"
+
+# This section is for Replit's deployment feature.
+# We'll make it consistent with the run command.
+[deployment]
+run = ["sh", "-c", "npm start"]
