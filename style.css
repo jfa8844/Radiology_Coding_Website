@@ -85,12 +85,21 @@ button:hover {
     background-color: #0056b3;
 }
 
-/* Error Message */
-.error-message {
-    color: #ff4d4d; /* A clear red for errors */
+/* Message container for success/error feedback */
+.message {
     min-height: 1.2em; /* Prevents layout shift */
     font-size: 0.9em;
     margin-top: 16px;
+    font-weight: bold;
+}
+
+.error-message {
+    color: #ff4d4d; /* A clear red for errors */
+}
+
+.success-message {
+    color: #28a745; /* A nice green for success */
+} main
 }
 
 /* Sign-up Link */
