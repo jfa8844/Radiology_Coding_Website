@@ -3,7 +3,9 @@ const SUPABASE_URL = 'YOUR_SUPABASE_URL';
 const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
 // Initialize the Supabase client
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// We are calling the createClient function from the global `supabase` object provided by the CDN script.
+// We are storing the created client in a new variable `supaClient` to avoid naming conflicts.
+const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Get references to the HTML elements
 const loginForm = document.getElementById('login-form');
@@ -24,7 +26,7 @@ loginForm.addEventListener('submit', async (event) => {
     const password = passwordInput.value;
 
     // Use the Supabase client to sign in the user
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supaClient.auth.signInWithPassword({
         email: email,
         password: password,
     });
