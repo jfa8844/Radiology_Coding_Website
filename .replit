@@ -1,5 +1,5 @@
-language = "bash"
-run = "npx serve"
+feat/login-page
+=======
 modules = ["web", "nodejs-20"]
 
 [deployment]
@@ -11,3 +11,4 @@ channel = "stable-25_05"
 [[ports]]
 localPort = 3000
 externalPort = 80
+main
