@@ -1,2 +1,13 @@
 language = "bash"
 run = "npx serve"
+modules = ["web", "nodejs-20"]
+
+[deployment]
+run = ["sh", "-c", "npx serve"]
+
+[nix]
+channel = "stable-25_05"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
