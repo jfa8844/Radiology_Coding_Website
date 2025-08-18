@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-T">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadTicker - Sign Up</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main>
+        <div class="login-container">
+            <h1>Create Account</h1>
+            <p>Join RadTicker to start tracking your productivity.</p>
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" minlength="6" required>
+                </div>
+                <button type="submit">Sign Up</button>
+            </form>
+            <p id="message-container" class="message"></p>
+            <p class="auth-link">Already have an account? <a href="index.html">Log In</a></p>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="signup.js"></script>
+</body>
+</html>
