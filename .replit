@@ -1,2 +1,3 @@
-run = "npm start" [deployment] 
+run = "npm start" 
+[deployment] 
 run = ["sh", "-c", "npm start"]
