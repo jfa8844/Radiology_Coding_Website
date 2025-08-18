@@ -1,14 +1,2 @@
-feat/login-page
-=======
-modules = ["web", "nodejs-20"]
-
-[deployment]
-run = ["sh", "-c", "npx serve"]
-
-[nix]
-channel = "stable-25_05"
-
-[[ports]]
-localPort = 3000
-externalPort = 80
-main
+run = "npm start" [deployment] 
+run = ["sh", "-c", "npm start"]
