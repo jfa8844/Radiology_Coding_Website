@@ -10,6 +10,45 @@ logoutButton.addEventListener('click', async () => {
     window.location.href = 'index.html';
 });
 
+function updateDashboard() {
+    const cards = document.querySelectorAll('.procedure-card');
+    let totalWrvu = 0;
+    let totalCases = 0;
+    const modalityCounts = {
+        CT: 0,
+        MRI: 0,
+        XR: 0,
+        US: 0,
+        NM: 0
+    };
+
+    cards.forEach(card => {
+        const count = parseInt(card.querySelector('.case-count').textContent, 10);
+        const wrvu = parseFloat(card.getAttribute('data-wrvu'));
+        const modality = card.getAttribute('data-modality');
+
+        totalWrvu += count * wrvu;
+        totalCases += count;
+
+        if (modality in modalityCounts) {
+            modalityCounts[modality] += count;
+        }
+    });
+
+    // Update Dashboard DOM
+    document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value').textContent = totalWrvu.toFixed(2);
+    // Assuming the "Total" cases are the sum of all cases
+    document.querySelector('.modality-trackers .modality-item:nth-child(1) .modality-value').textContent = totalCases;
+
+
+    document.querySelector('.modality-trackers .modality-item:nth-child(2) .modality-value').textContent = modalityCounts.CT;
+    document.querySelector('.modality-trackers .modality-item:nth-child(3) .modality-value').textContent = modalityCounts.MRI;
+    document.querySelector('.modality-trackers .modality-item:nth-child(4) .modality-value').textContent = modalityCounts.XR;
+    document.querySelector('.modality-trackers .modality-item:nth-child(5) .modality-value').textContent = modalityCounts.US;
+    document.querySelector('.modality-trackers .modality-item:nth-child(6) .modality-value').textContent = modalityCounts.NM;
+
+}
+
 async function loadProcedures() {
     const procedureGrid = document.querySelector('.procedure-grid');
     procedureGrid.innerHTML = ''; // Clear existing static cards
@@ -40,6 +79,7 @@ async function loadProcedures() {
     });
 
     attachEventListeners();
+    updateDashboard(); // Initial call to set dashboard to 0
 }
 
 function attachEventListeners() {
@@ -50,6 +90,7 @@ function attachEventListeners() {
             const countElement = card.querySelector('.case-count');
             let currentCount = parseInt(countElement.textContent, 10);
             countElement.textContent = currentCount + 1;
+            updateDashboard(); // Update dashboard on increment
         });
     });
 
@@ -74,11 +115,12 @@ function attachEventListeners() {
             }
         });
 
-        // Add a blur event listener to handle empty input
+        // Add a blur event listener to handle empty input and update dashboard
         countElement.addEventListener('blur', () => {
             if (countElement.textContent.trim() === '') {
                 countElement.textContent = '0';
             }
+            updateDashboard(); // Update dashboard after manual edit
         });
     });
 }
