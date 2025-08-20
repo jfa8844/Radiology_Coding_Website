@@ -97,7 +97,8 @@ async function loadProcedures() {
 
     const { data, error } = await supaClient
         .from('procedures')
-        .select('id, abbreviation, description, wrvu, modality');
+        .select('id, abbreviation, description, wrvu, modality')
+        .eq('default_display', true);
 
     if (error) {
         console.error('Error fetching procedures:', error);
