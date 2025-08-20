@@ -97,13 +97,15 @@ async function loadProcedures() {
 
     const { data, error } = await supaClient
         .from('procedures')
-        .select('id, abbreviation, description, wrvu, modality')
+        .select('id, abbreviation, description, wrvu, modality, default_row, default_column')
         .eq('default_display', true);
 
     if (error) {
         console.error('Error fetching procedures:', error);
         return;
     }
+
+    data.sort((a, b) => a.default_row - b.default_row || a.default_column - b.default_column);
 
     data.forEach(procedure => {
         const cardHTML = `
