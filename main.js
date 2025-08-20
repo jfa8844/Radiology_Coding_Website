@@ -3,8 +3,23 @@ const SUPABASE_URL = 'https://byvclyemwwoxhhzsfwrh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dmNseWVtd3dveGhoenNmd3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NjYwNzYsImV4cCI6MjA3MTA0MjA3Nn0.6Wy4Xm02bskAZPXMJMudWgtoUqlZNIp0UDAQibr3jwM';
 const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Logout functionality
+// DOM element references
 const logoutButton = document.getElementById('logout-btn');
+const shiftStartTimeInput = document.getElementById('shift-start-time');
+const goalWrvuPerHourInput = document.getElementById('goal-wrvu-per-hr');
+const totalWrvuValue = document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value');
+const wrvuPerHourValue = document.querySelector('.live-metrics .metric-item:nth-child(2) .metric-value');
+const paceValue = document.querySelector('.live-metrics .metric-item:nth-child(3) .metric-value');
+const totalCasesValue = document.querySelector('.modality-trackers .modality-item:nth-child(1) .modality-value');
+const modalityValues = {
+    CT: document.querySelector('.modality-trackers .modality-item:nth-child(2) .modality-value'),
+    MRI: document.querySelector('.modality-trackers .modality-item:nth-child(3) .modality-value'),
+    XR: document.querySelector('.modality-trackers .modality-item:nth-child(4) .modality-value'),
+    US: document.querySelector('.modality-trackers .modality-item:nth-child(5) .modality-value'),
+    NM: document.querySelector('.modality-trackers .modality-item:nth-child(6) .modality-value')
+};
+
+// Logout functionality
 logoutButton.addEventListener('click', async () => {
     await supaClient.auth.signOut();
     window.location.href = 'index.html';
@@ -14,39 +29,66 @@ function updateDashboard() {
     const cards = document.querySelectorAll('.procedure-card');
     let totalWrvu = 0;
     let totalCases = 0;
-    const modalityCounts = {
-        CT: 0,
-        MRI: 0,
-        XR: 0,
-        US: 0,
-        NM: 0
-    };
+    const modalityCounts = { CT: 0, MRI: 0, XR: 0, US: 0, NM: 0 };
 
     cards.forEach(card => {
         const count = parseInt(card.querySelector('.case-count').textContent, 10);
         const wrvu = parseFloat(card.getAttribute('data-wrvu'));
         const modality = card.getAttribute('data-modality');
 
-        totalWrvu += count * wrvu;
-        totalCases += count;
-
-        if (modality in modalityCounts) {
-            modalityCounts[modality] += count;
+        if (!isNaN(count) && !isNaN(wrvu)) {
+            totalWrvu += count * wrvu;
+            totalCases += count;
+            if (modality in modalityCounts) {
+                modalityCounts[modality] += count;
+            }
         }
     });
 
-    // Update Dashboard DOM
-    document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value').textContent = totalWrvu.toFixed(2);
-    // Assuming the "Total" cases are the sum of all cases
-    document.querySelector('.modality-trackers .modality-item:nth-child(1) .modality-value').textContent = totalCases;
+    totalWrvuValue.textContent = totalWrvu.toFixed(2);
+    totalCasesValue.textContent = totalCases;
+    modalityValues.CT.textContent = modalityCounts.CT;
+    modalityValues.MRI.textContent = modalityCounts.MRI;
+    modalityValues.XR.textContent = modalityCounts.XR;
+    modalityValues.US.textContent = modalityCounts.US;
+    modalityValues.NM.textContent = modalityCounts.NM;
 
+    // Time-based calculations
+    const shiftStartTime = shiftStartTimeInput.value;
+    const goalWrvuPerHour = parseFloat(goalWrvuPerHourInput.value);
 
-    document.querySelector('.modality-trackers .modality-item:nth-child(2) .modality-value').textContent = modalityCounts.CT;
-    document.querySelector('.modality-trackers .modality-item:nth-child(3) .modality-value').textContent = modalityCounts.MRI;
-    document.querySelector('.modality-trackers .modality-item:nth-child(4) .modality-value').textContent = modalityCounts.XR;
-    document.querySelector('.modality-trackers .modality-item:nth-child(5) .modality-value').textContent = modalityCounts.US;
-    document.querySelector('.modality-trackers .modality-item:nth-child(6) .modality-value').textContent = modalityCounts.NM;
+    if (!shiftStartTime) {
+        wrvuPerHourValue.textContent = "0";
+        paceValue.textContent = "0h 0m";
+        return;
+    }
 
+    const elapsedHours = (new Date() - new Date(shiftStartTime)) / (1000 * 60 * 60);
+
+    if (elapsedHours <= 0) {
+        wrvuPerHourValue.textContent = "0";
+        paceValue.textContent = "0h 0m";
+        return;
+    }
+
+    const actualWrvuPerHour = totalWrvu / elapsedHours;
+    wrvuPerHourValue.textContent = actualWrvuPerHour.toFixed(2);
+
+    if (isNaN(goalWrvuPerHour) || goalWrvuPerHour <= 0) {
+        paceValue.textContent = "0h 0m";
+        return;
+    }
+
+    const targetWrvus = goalWrvuPerHour * elapsedHours;
+    const wrvuDifference = totalWrvu - targetWrvus;
+    const paceMinutes = (wrvuDifference / goalWrvuPerHour) * 60;
+
+    const sign = paceMinutes < 0 ? "-" : "+";
+    const absPaceMinutes = Math.abs(paceMinutes);
+    const hours = Math.floor(absPaceMinutes / 60);
+    const minutes = Math.round(absPaceMinutes % 60);
+
+    paceValue.textContent = `${sign}${hours}h ${minutes}m`;
 }
 
 async function loadProcedures() {
@@ -99,23 +141,18 @@ function attachEventListeners() {
         countElement.contentEditable = true;
 
         countElement.addEventListener('keydown', (event) => {
-            // Allow control keys like backspace, delete, arrows
-            if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(event.key)) {
+            if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter'].includes(event.key)) {
+                 if (event.key === 'Enter') {
+                    event.preventDefault();
+                    countElement.blur();
+                }
                 return;
             }
-            // If the key is "Enter", remove focus from the element
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                countElement.blur();
-                return;
-            }
-            // Prevent any key that is not a number
             if (!/^[0-9]$/.test(event.key)) {
                 event.preventDefault();
             }
         });
 
-        // Add a blur event listener to handle empty input and update dashboard
         countElement.addEventListener('blur', () => {
             if (countElement.textContent.trim() === '') {
                 countElement.textContent = '0';
@@ -123,6 +160,12 @@ function attachEventListeners() {
             updateDashboard(); // Update dashboard after manual edit
         });
     });
+
+    // Listen for changes on the new inputs
+    shiftStartTimeInput.addEventListener('change', updateDashboard);
+    goalWrvuPerHourInput.addEventListener('change', updateDashboard);
 }
 
 loadProcedures();
+
+setInterval(updateDashboard, 60000);
