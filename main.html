@@ -8,21 +8,41 @@
 </head>
 <body class="app-body">
     <header class="dashboard-container">
-        <div class="dashboard-content">
-            <div class="dashboard-section shift-inputs">
-                <input type="text" placeholder="Shift Title">
-                <input type="text" placeholder="Shift Type">
-            </div>
-            <div class="dashboard-section live-tallies">
-                <span>Total wRVU: <strong>0</strong></span>
-                <span>Actual wRVU/hr: <strong>0</strong></span>
-            </div>
-            <div class="dashboard-section controls">
-                <button id="end-shift-btn">End Shift</button>
-                <button id="logout-btn">Logout</button>
-            </div>
+    <div class="dashboard-section shift-info">
+        <div class="shift-info-inputs">
+            <input type="text" placeholder="Shift Title">
+            <input type="text" placeholder="Shift Type">
+            <input type="number" class="input-narrow" placeholder="Shift Length (hrs)">
+            <input type="number" class="input-narrow" placeholder="Goal wRVU/hr">
         </div>
-    </header>
+        <div class="modality-trackers">
+            <div class="modality-item"><span class="modality-name">Total</span><span class="modality-value">0</span></div>
+            <div class="modality-item"><span class="modality-name">CT</span><span class="modality-value">0</span></div>
+            <div class="modality-item"><span class="modality-name">MRI</span><span class="modality-value">0</span></div>
+            <div class="modality-item"><span class="modality-name">XR</span><span class="modality-value">0</span></div>
+            <div class="modality-item"><span class="modality-name">US</span><span class="modality-value">0</span></div>
+            <div class="modality-item"><span class="modality-name">NM</span><span class="modality-value">0</span></div>
+        </div>
+    </div>
+    <div class="dashboard-section live-metrics">
+        <div class="metric-item">
+            <span class="metric-title">Total wrvu</span>
+            <span class="metric-value">0</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-title">wrvu/hr</span>
+            <span class="metric-value">0</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-title">Pace</span>
+            <span class="metric-value">0h 0m</span>
+        </div>
+    </div>
+    <div class="dashboard-section shift-controls">
+        <button id="end-shift-btn">End Shift</button>
+        <button id="logout-btn">Logout</button>
+    </div>
+</header>
 
     <main class="procedure-grid">
         <div class="procedure-card" data-procedure-id="101" data-default-row="1" data-default-col="1">
