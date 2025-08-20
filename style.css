@@ -231,52 +231,65 @@ button:hover {
 .procedure-card {
     background-color: var(--background-secondary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 16px;
+    border-radius: 6px; /* Slightly smaller radius */
+    padding: 8px 12px; /* Reduced padding */
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: transform 0.2s, box-shadow 0.2s;
+    flex-direction: row; /* Horizontal layout */
+    justify-content: space-between; /* Pushes header and controls apart */
+    align-items: center; /* Vertically centers items */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: box-shadow 0.2s;
+    height: 50px; /* Greatly reduced height */
+    box-sizing: border-box;
 }
 
 .procedure-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 0 5px var(--accent-primary-shadow); /* Subtle glow effect */
 }
 
 .card-header {
-    width: 100%;
-    margin-bottom: 12px;
-    min-height: 50px; /* Prevents card size changes */
+    text-align: left;
+    margin: 0;
+    min-height: 0;
+    flex-grow: 1; /* Allows header to take available space */
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .card-header h3 {
-    font-size: 1.1em;
+    font-size: 0.9em;
     color: var(--text-light);
-    margin: 0 0 4px 0;
+    margin: 0 0 2px 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .card-header p {
-    font-size: 0.9em;
+    font-size: 0.8em;
     color: var(--text-secondary);
     margin: 0;
 }
 
+.card-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Space between count and button */
+    flex-shrink: 0; /* Prevents controls from shrinking */
+}
+
 .case-count {
-    font-size: 3.5em;
+    font-size: 1.4em; /* Drastically reduced font size */
     font-weight: bold;
     color: var(--text-light);
-    margin-bottom: 12px;
     line-height: 1;
+    margin: 0;
 }
 
 .increment-btn {
-    width: 50px;
-    height: 50px;
+    width: 30px; /* Smaller button */
+    height: 30px; /* Smaller button */
     border-radius: 50%;
-    font-size: 2em;
+    font-size: 1.2em; /* Smaller font size */
     line-height: 1;
     padding: 0;
     display: flex;
