@@ -1,8 +1,24 @@
+:root {
+    --background-primary: #121212;
+    --background-secondary: #1e1e1e;
+    --background-input: #2c2c2c;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --text-tertiary: #c0c0c0;
+    --text-light: #ffffff;
+    --border-primary: #333;
+    --accent-primary: #007bff;
+    --accent-primary-darker: #0056b3;
+    --accent-primary-shadow: rgba(0, 123, 255, 0.25);
+    --error: #ff4d4d;
+    --success: #28a745;
+}
+
 /* General Body Styles */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #121212; /* Very dark grey, almost black */
-    color: #e0e0e0; /* Light grey for text */
+    background-color: var(--background-primary);
+    color: var(--text-primary);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -18,7 +34,7 @@ main {
 
 /* Login Container */
 .login-container {
-    background-color: #1e1e1e; /* Dark grey */
+    background-color: var(--background-secondary);
     padding: 40px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -26,17 +42,17 @@ main {
 }
 
 h1 {
-    color: #ffffff;
+    color: var(--text-light);
     margin-bottom: 8px;
 }
 
 .login-container p {
-    color: #a0a0a0; /* Muted grey for subtitle */
+    color: var(--text-secondary);
     margin-bottom: 24px;
 }
 
 /* Form Styles */
-#login-form {
+#login-form, #signup-form {
     display: flex;
     flex-direction: column;
 }
@@ -50,28 +66,28 @@ h1 {
     display: block;
     margin-bottom: 8px;
     font-size: 0.9em;
-    color: #c0c0c0;
+    color: var(--text-tertiary);
 }
 
 .form-group input {
     width: 100%;
     padding: 10px;
-    border: 1px solid #333;
-    background-color: #2c2c2c;
-    color: #e0e0e0;
+    border: 1px solid var(--border-primary);
+    background-color: var(--background-input);
+    color: var(--text-primary);
     border-radius: 4px;
     box-sizing: border-box; /* Ensures padding doesn't affect width */
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #007bff; /* A nice blue for focus */
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-shadow);
 }
 
 button {
     padding: 12px;
-    background-color: #007bff;
+    background-color: var(--accent-primary);
     color: white;
     border: none;
     border-radius: 4px;
@@ -82,7 +98,7 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: var(--accent-primary-darker);
 }
 
 /* Message container for success/error feedback */
@@ -94,11 +110,11 @@ button:hover {
 }
 
 .error-message {
-    color: #ff4d4d; /* A clear red for errors */
+    color: var(--error);
 }
 
 .success-message {
-    color: #28a745; /* A nice green for success */
+    color: var(--success);
 }
 
 /* Sign-up Link */
@@ -108,10 +124,162 @@ button:hover {
 }
 
 .auth-link a {
-    color: #007bff;
+    color: var(--accent-primary);
     text-decoration: none;
 }
 
 .auth-link a:hover {
     text-decoration: underline;
+}
+
+/* =================================
+   Main Application Styles
+   ================================= */
+
+/* App-specific body styles to override login page styles */
+.app-body {
+    display: block;
+    justify-content: initial;
+    align-items: initial;
+    height: auto;
+    padding-top: 80px; /* Space for the sticky header */
+}
+
+/* Override main for app layout */
+.app-body main {
+    max-width: none;
+    padding: 0;
+}
+
+/* Dashboard Header */
+.dashboard-container {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: var(--background-secondary);
+    padding: 0 32px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    border-bottom: 1px solid var(--border-primary);
+    height: 80px;
+    box-sizing: border-box;
+}
+
+.dashboard-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1600px;
+    height: 100%;
+    margin: 0 auto;
+}
+
+.dashboard-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.live-tallies span {
+    font-size: 1.1em;
+}
+
+.live-tallies strong {
+    color: var(--text-light);
+    font-weight: bold;
+}
+
+.dashboard-container input[type="text"] {
+    padding: 8px 12px;
+    background-color: var(--background-input);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+    border-radius: 4px;
+    min-width: 150px;
+}
+
+.dashboard-container input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-shadow);
+}
+
+.dashboard-container .controls button {
+    padding: 8px 16px;
+    font-size: 0.9em;
+}
+
+#end-shift-btn {
+    background-color: var(--error);
+}
+
+#end-shift-btn:hover {
+    background-color: #c82333; /* Darker red */
+}
+
+
+/* Procedure Grid */
+.procedure-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Procedure Card */
+.procedure-card {
+    background-color: var(--background-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.procedure-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+.card-header {
+    width: 100%;
+    margin-bottom: 12px;
+    min-height: 50px; /* Prevents card size changes */
+}
+
+.card-header h3 {
+    font-size: 1.1em;
+    color: var(--text-light);
+    margin: 0 0 4px 0;
+}
+
+.card-header p {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.case-count {
+    font-size: 3.5em;
+    font-weight: bold;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    line-height: 1;
+}
+
+.increment-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 2em;
+    line-height: 1;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
