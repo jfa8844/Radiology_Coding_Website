@@ -157,21 +157,19 @@ button:hover {
     top: 0;
     z-index: 1000;
     background-color: var(--background-secondary);
-    padding: 0 32px;
+    padding: 16px 32px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     border-bottom: 1px solid var(--border-primary);
-    height: 80px;
+    height: 120px;
     box-sizing: border-box;
-}
-
-.dashboard-content {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 32px;
     max-width: 1600px;
-    height: 100%;
     margin: 0 auto;
 }
+
 
 .dashboard-section {
     display: flex;
@@ -179,16 +177,74 @@ button:hover {
     gap: 16px;
 }
 
-.live-tallies span {
-    font-size: 1.1em;
+.shift-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
 }
 
-.live-tallies strong {
+.shift-info-inputs, .modality-trackers {
+    display: flex;
+    gap: 16px;
+}
+
+.modality-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    padding: 4px 8px;
+    background-color: var(--background-input);
+}
+
+.modality-name {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+.modality-value {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--text-light);
+    min-width: 20px;
+    text-align: center;
+}
+
+.live-metrics {
+    /* This is now just a flex container for the metric items */
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    padding: 8px 16px;
+    background-color: var(--background-primary);
+    min-width: 100px; /* Ensure items have a consistent width */
+    text-align: center;
+}
+
+.metric-title {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.metric-value {
+    font-size: 1.4em;
     color: var(--text-light);
     font-weight: bold;
 }
 
-.dashboard-container input[type="text"] {
+.dashboard-container input[type="text"],
+.dashboard-container input[type="number"],
+.dashboard-container select {
     padding: 8px 12px;
     background-color: var(--background-input);
     border: 1px solid var(--border-primary);
@@ -197,16 +253,24 @@ button:hover {
     min-width: 150px;
 }
 
-.dashboard-container input[type="text"]:focus {
+.dashboard-container input[type="text"]:focus,
+.dashboard-container input[type="number"]:focus,
+.dashboard-container select:focus {
     outline: none;
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 2px var(--accent-primary-shadow);
 }
 
-.dashboard-container .controls button {
+.dashboard-container input[type="number"].input-narrow {
+    min-width: 120px;
+    width: 120px;
+}
+
+.dashboard-container .shift-controls button {
     padding: 8px 16px;
     font-size: 0.9em;
 }
+
 
 #end-shift-btn {
     background-color: var(--error);
