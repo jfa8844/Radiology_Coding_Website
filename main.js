@@ -105,11 +105,9 @@ async function loadProcedures() {
         return;
     }
 
-    data.sort((a, b) => a.default_row - b.default_row || a.default_column - b.default_column);
-
     data.forEach(procedure => {
         const cardHTML = `
-            <div class="procedure-card" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
+            <div class="procedure-card" style="grid-row-start: ${procedure.default_row}; grid-column-start: ${procedure.default_column};" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
                 <div class="card-header">
                     <h3>${procedure.abbreviation}</h3>
                     <p>${procedure.wrvu}</p>
