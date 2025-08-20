@@ -40,4 +40,11 @@ document.querySelectorAll('.case-count').forEach(countElement => {
             event.preventDefault();
         }
     });
+
+    // Add a blur event listener to handle empty input
+    countElement.addEventListener('blur', () => {
+        if (countElement.textContent.trim() === '') {
+            countElement.textContent = '0';
+        }
+    });
 });
