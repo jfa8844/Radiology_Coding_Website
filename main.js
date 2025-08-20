@@ -109,7 +109,7 @@ async function loadProcedures() {
             <div class="procedure-card" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
                 <div class="card-header">
                     <h3>${procedure.abbreviation}</h3>
-                    <p>${procedure.description}</p>
+                    <p>${procedure.wrvu}</p>
                 </div>
                 <div class="card-controls">
                     <div class="case-count">0</div>
