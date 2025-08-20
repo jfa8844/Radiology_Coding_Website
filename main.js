@@ -10,41 +10,77 @@ logoutButton.addEventListener('click', async () => {
     window.location.href = 'index.html';
 });
 
-// Increment button functionality
-document.querySelectorAll('.increment-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        const card = button.closest('.procedure-card');
-        const countElement = card.querySelector('.case-count');
-        let currentCount = parseInt(countElement.textContent, 10);
-        countElement.textContent = currentCount + 1;
-    });
-});
+async function loadProcedures() {
+    const procedureGrid = document.querySelector('.procedure-grid');
+    procedureGrid.innerHTML = ''; // Clear existing static cards
 
-// Manual count editing
-document.querySelectorAll('.case-count').forEach(countElement => {
-    countElement.contentEditable = true;
+    const { data, error } = await supaClient
+        .from('procedures')
+        .select('id, abbreviation, description, wrvu, modality');
 
-    countElement.addEventListener('keydown', (event) => {
-        // Allow control keys like backspace, delete, arrows
-        if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(event.key)) {
-            return;
-        }
-        // If the key is "Enter", remove focus from the element
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            countElement.blur();
-            return;
-        }
-        // Prevent any key that is not a number
-        if (!/^[0-9]$/.test(event.key)) {
-            event.preventDefault();
-        }
+    if (error) {
+        console.error('Error fetching procedures:', error);
+        return;
+    }
+
+    data.forEach(procedure => {
+        const cardHTML = `
+            <div class="procedure-card" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
+                <div class="card-header">
+                    <h3>${procedure.abbreviation}</h3>
+                    <p>${procedure.description}</p>
+                </div>
+                <div class="card-controls">
+                    <div class="case-count">0</div>
+                    <button class="increment-btn">+</button>
+                </div>
+            </div>
+        `;
+        procedureGrid.innerHTML += cardHTML;
     });
 
-    // Add a blur event listener to handle empty input
-    countElement.addEventListener('blur', () => {
-        if (countElement.textContent.trim() === '') {
-            countElement.textContent = '0';
-        }
+    attachEventListeners();
+}
+
+function attachEventListeners() {
+    // Increment button functionality
+    document.querySelectorAll('.increment-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const card = button.closest('.procedure-card');
+            const countElement = card.querySelector('.case-count');
+            let currentCount = parseInt(countElement.textContent, 10);
+            countElement.textContent = currentCount + 1;
+        });
     });
-});
+
+    // Manual count editing
+    document.querySelectorAll('.case-count').forEach(countElement => {
+        countElement.contentEditable = true;
+
+        countElement.addEventListener('keydown', (event) => {
+            // Allow control keys like backspace, delete, arrows
+            if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(event.key)) {
+                return;
+            }
+            // If the key is "Enter", remove focus from the element
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                countElement.blur();
+                return;
+            }
+            // Prevent any key that is not a number
+            if (!/^[0-9]$/.test(event.key)) {
+                event.preventDefault();
+            }
+        });
+
+        // Add a blur event listener to handle empty input
+        countElement.addEventListener('blur', () => {
+            if (countElement.textContent.trim() === '') {
+                countElement.textContent = '0';
+            }
+        });
+    });
+}
+
+loadProcedures();
