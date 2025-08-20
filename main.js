@@ -109,8 +109,7 @@ async function loadProcedures() {
         const cardHTML = `
             <div class="procedure-card" style="grid-row-start: ${procedure.default_row}; grid-column-start: ${procedure.default_column};" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
                 <div class="card-header">
-                    <h3>${procedure.abbreviation}</h3>
-                    <p>${procedure.wrvu}</p>
+                    <h3>${procedure.abbreviation} (${procedure.wrvu})</h3>
                 </div>
                 <div class="card-controls">
                     <div class="case-count">0</div>
