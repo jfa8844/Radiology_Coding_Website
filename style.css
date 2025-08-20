@@ -342,18 +342,19 @@ button:hover {
 }
 
 .case-count {
-    font-size: 1.4em; /* Drastically reduced font size */
+    font-size: 1em;
     font-weight: bold;
     color: var(--text-light);
     line-height: 1;
     margin: 0;
+    padding: 0 4px;
 }
 
 .increment-btn {
-    width: 30px; /* Smaller button */
-    height: 30px; /* Smaller button */
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    font-size: 1.2em; /* Smaller font size */
+    font-size: 1em;
     line-height: 1;
     padding: 0;
     display: flex;
