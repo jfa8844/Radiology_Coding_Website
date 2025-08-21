@@ -6,6 +6,7 @@ const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // DOM element references
 const logoutButton = document.getElementById('logout-btn');
 const historyTableBody = document.getElementById('history-table-body');
+const exportCsvButton = document.getElementById('export-csv-btn');
 
 // Check for user session
 async function checkUserSession() {
@@ -54,6 +55,40 @@ async function loadHistory() {
 logoutButton.addEventListener('click', async () => {
     await supaClient.auth.signOut();
     window.location.href = 'index.html';
+});
+
+// Export to CSV functionality
+exportCsvButton.addEventListener('click', () => {
+    const table = document.getElementById('history-table');
+    const rows = table.querySelectorAll('tr');
+    let csvContent = '';
+
+    // Add header row
+    const headers = [];
+    rows[0].querySelectorAll('th').forEach(header => {
+        headers.push(header.innerText);
+    });
+    csvContent += headers.join(',') + '\n';
+
+    // Add data rows
+    for (let i = 1; i < rows.length; i++) {
+        const row = [];
+        rows[i].querySelectorAll('td').forEach(cell => {
+            row.push(cell.innerText);
+        });
+        csvContent += row.join(',') + '\n';
+    }
+
+    // Trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'radticker_history.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 });
 
 // Initial load
