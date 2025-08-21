@@ -180,6 +180,35 @@ async function getOrCreateActiveShift() {
     }
 }
 
+async function updateProcedureCount(procedureId, newCount) {
+    const activeShiftId = await getOrCreateActiveShift();
+    if (!activeShiftId) {
+        console.error("No active shift ID found. Cannot update procedure count.");
+        return;
+    }
+
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) {
+        console.error("No user found. Cannot update procedure count.");
+        return;
+    }
+
+    const { error } = await supaClient
+        .from('shift_entries')
+        .upsert({
+            shift_id: activeShiftId,
+            procedure_id: parseInt(procedureId),
+            user_id: user.id,
+            count: newCount
+        }, {
+            onConflict: 'shift_id, procedure_id'
+        });
+
+    if (error) {
+        console.error('Error updating procedure count:', error);
+    }
+}
+
 async function updateShiftData(field, value) {
     const activeShiftId = await getOrCreateActiveShift();
     if (!activeShiftId) {
@@ -394,8 +423,11 @@ function attachEventListeners() {
             const card = button.closest('.procedure-card');
             const countElement = card.querySelector('.case-count');
             let currentCount = parseInt(countElement.textContent, 10);
-            countElement.textContent = currentCount + 1;
+            const newCount = currentCount + 1;
+            countElement.textContent = newCount;
             updateDashboard(); // Update dashboard on increment
+            const procedureId = card.getAttribute('data-procedure-id');
+            updateProcedureCount(procedureId, newCount);
         });
     });
 
@@ -417,10 +449,17 @@ function attachEventListeners() {
         });
 
         countElement.addEventListener('blur', () => {
+            let newCount;
             if (countElement.textContent.trim() === '') {
                 countElement.textContent = '0';
+                newCount = 0;
+            } else {
+                newCount = parseInt(countElement.textContent, 10);
             }
             updateDashboard(); // Update dashboard after manual edit
+            const card = countElement.closest('.procedure-card');
+            const procedureId = card.getAttribute('data-procedure-id');
+            updateProcedureCount(procedureId, newCount);
         });
     });
 
