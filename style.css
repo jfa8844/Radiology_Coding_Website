@@ -283,12 +283,20 @@ button:hover {
 
 /* Procedure Grid */
 .procedure-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    display: flex;
     gap: 20px;
     padding: 20px;
     max-width: 1600px;
     margin: 0 auto;
+    align-items: flex-start; /* Align columns to the top */
+}
+
+.grid-column {
+    flex: 1; /* Each column will take up equal space */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Spacing between cards in a column */
+    min-height: 50px; /* Ensure even empty columns are droppable */
 }
 
 /* Procedure Card */
