@@ -10,6 +10,7 @@ const dropdownMenu = document.getElementById('dropdown-menu');
 const logoutButton = document.getElementById('logout-btn');
 const saveLayoutButton = document.getElementById('save-layout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
+const endShiftButton = document.getElementById('end-shift-btn');
 const shiftTitleInput = document.getElementById('shift-title');
 const shiftTypeInput = document.getElementById('shift-type');
 const shiftLengthHrsInput = document.getElementById('shift-length-hrs');
@@ -44,6 +45,15 @@ window.addEventListener('click', (event) => {
 logoutButton.addEventListener('click', async () => {
     await supaClient.auth.signOut();
     window.location.href = 'index.html';
+});
+
+endShiftButton.addEventListener('click', () => {
+    if (confirm('Are you sure you want to end the current shift?')) {
+        updateShiftData('shift_end_time', new Date().toISOString());
+        alert('Shift has been ended. Your data is saved.');
+        // Optional: Clear the form or redirect
+        location.reload();
+    }
 });
 
 // Save layout functionality
@@ -138,6 +148,8 @@ async function getOrCreateActiveShift() {
         activeShiftId = existingShift.id;
         shiftTitleInput.value = existingShift.shift_title || '';
         shiftTypeInput.value = existingShift.shift_type || '';
+        shiftLengthHrsInput.value = existingShift.shift_length_hours || '';
+        goalWrvuPerHourInput.value = existingShift.goal_wrvu_per_hr || '';
 
         // Format the date for the datetime-local input
         if (existingShift.shift_start_time) {
@@ -489,7 +501,7 @@ function attachEventListeners() {
     // Add blur event listeners for real-time saving
     shiftTitleInput.addEventListener('blur', () => updateShiftData('shift_title', shiftTitleInput.value));
     shiftTypeInput.addEventListener('blur', () => updateShiftData('shift_type', shiftTypeInput.value));
-    shiftLengthHrsInput.addEventListener('blur', () => updateShiftData('shift_length_hrs', shiftLengthHrsInput.value));
+    shiftLengthHrsInput.addEventListener('blur', () => updateShiftData('shift_length_hours', shiftLengthHrsInput.value));
     goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData('goal_wrvu_per_hr', goalWrvuPerHourInput.value));
     shiftStartTimeInput.addEventListener('blur', () => updateShiftData('shift_start_time', shiftStartTimeInput.value));
 }
