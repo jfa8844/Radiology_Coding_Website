@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="app-body">
+    <nav class="main-nav">
+        <div class="nav-controls">
+            <div class="dropdown">
+                <button id="settings-btn" class="dropdown-toggle">Settings ⚙️</button>
+                <div id="dropdown-menu" class="dropdown-menu">
+                    <button id="save-layout-btn">Save Layout</button>
+                    <button id="reset-layout-btn">Reset Layout</button>
+                </div>
+            </div>
+            <button id="end-shift-btn">End Shift</button>
+            <button id="logout-btn">Logout</button>
+        </div>
+    </nav>
     <header class="dashboard-container">
     <div class="dashboard-section shift-info">
         <div class="shift-info-inputs">
@@ -38,12 +51,6 @@
             <span class="metric-title">Pace</span>
             <span class="metric-value">0h 0m</span>
         </div>
-    </div>
-    <div class="dashboard-section shift-controls">
-        <button id="save-layout-btn">Save Layout</button>
-        <button id="reset-layout-btn">Reset Layout</button>
-        <button id="end-shift-btn">End Shift</button>
-        <button id="logout-btn">Logout</button>
     </div>
 </header>
 

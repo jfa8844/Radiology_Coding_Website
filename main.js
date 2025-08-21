@@ -4,6 +4,8 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // DOM element references
+const settingsButton = document.getElementById('settings-btn');
+const dropdownMenu = document.getElementById('dropdown-menu');
 const logoutButton = document.getElementById('logout-btn');
 const saveLayoutButton = document.getElementById('save-layout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
@@ -20,6 +22,19 @@ const modalityValues = {
     US: document.querySelector('.modality-trackers .modality-item:nth-child(5) .modality-value'),
     NM: document.querySelector('.modality-trackers .modality-item:nth-child(6) .modality-value')
 };
+
+// Dropdown menu functionality
+settingsButton.addEventListener('click', () => {
+    dropdownMenu.classList.toggle('show');
+});
+
+window.addEventListener('click', (event) => {
+    if (!event.target.matches('#settings-btn')) {
+        if (dropdownMenu.classList.contains('show')) {
+            dropdownMenu.classList.remove('show');
+        }
+    }
+});
 
 // Logout functionality
 logoutButton.addEventListener('click', async () => {
