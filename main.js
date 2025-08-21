@@ -161,9 +161,9 @@ async function loadProcedures() {
     const { data: { user } } = await supaClient.auth.getUser();
 
     let procedureDetails;
+    let loadDefault = true;
 
     if (user) {
-        // User is logged in, try to fetch their preferences
         const { data: preferences, error: prefError } = await supaClient
             .from('user_procedure_preferences')
             .select('procedure_id, display_row, display_column')
@@ -174,32 +174,35 @@ async function loadProcedures() {
         }
 
         if (preferences && preferences.length > 0) {
-            // User has a saved layout
-            const procedureIds = preferences.map(p => p.procedure_id);
-            const { data, error } = await supaClient
-                .from('procedures')
-                .select('id, abbreviation, description, wrvu, modality')
-                .in('id', procedureIds);
+            const hasCustomLayout = preferences.some(p => p.display_row !== null || p.display_column !== null);
 
-            if (error) {
-                console.error('Error fetching procedures based on preferences:', error);
-                // Fallback to default in case of error
-            } else {
-                 procedureDetails = data.map(proc => {
-                    const pref = preferences.find(p => p.procedure_id === proc.id);
-                    return { ...proc, display_row: pref.display_row, display_column: pref.display_column };
-                }).sort((a, b) => {
-                    if (a.display_row !== b.display_row) {
-                        return a.display_row - b.display_row;
-                    }
-                    return a.display_column - b.display_column;
-                });
+            if (hasCustomLayout) {
+                loadDefault = false;
+                const procedureIds = preferences.map(p => p.procedure_id);
+                const { data, error } = await supaClient
+                    .from('procedures')
+                    .select('id, abbreviation, description, wrvu, modality')
+                    .in('id', procedureIds);
+
+                if (error) {
+                    console.error('Error fetching procedures based on preferences:', error);
+                    loadDefault = true; // Fallback to default in case of error
+                } else {
+                    procedureDetails = data.map(proc => {
+                        const pref = preferences.find(p => p.procedure_id === proc.id);
+                        return { ...proc, display_row: pref.display_row, display_column: pref.display_column };
+                    }).sort((a, b) => {
+                        if (a.display_row !== b.display_row) {
+                            return a.display_row - b.display_row;
+                        }
+                        return a.display_column - b.display_column;
+                    });
+                }
             }
         }
     }
 
-    // If procedureDetails is not set yet (no user, no preferences, or an error), load default
-    if (!procedureDetails) {
+    if (loadDefault) {
         const { data, error } = await supaClient
             .from('procedures')
             .select('id, abbreviation, description, wrvu, modality, default_row, default_column')
@@ -213,7 +216,7 @@ async function loadProcedures() {
             ...proc,
             display_row: proc.default_row,
             display_column: proc.default_column
-        })).sort((a,b) => {
+        })).sort((a, b) => {
             if (a.display_row !== b.display_row) {
                 return a.display_row - b.display_row;
             }
