@@ -47,13 +47,11 @@ logoutButton.addEventListener('click', async () => {
     window.location.href = 'index.html';
 });
 
-endShiftButton.addEventListener('click', () => {
-    if (confirm('Are you sure you want to end the current shift?')) {
-        updateShiftData('shift_end_time', new Date().toISOString());
-        alert('Shift has been ended. Your data is saved.');
-        // Optional: Clear the form or redirect
-        location.reload();
-    }
+endShiftButton.addEventListener('click', async () => {
+    // The confirm() popup does not work in this environment, so we proceed directly.
+    await updateShiftData('shift_end_time', new Date().toISOString());
+    // The alert() popup is also removed. The page will reload to reflect the ended shift.
+    location.reload();
 });
 
 // Save layout functionality
@@ -502,7 +500,7 @@ function attachEventListeners() {
     shiftTitleInput.addEventListener('blur', () => updateShiftData('shift_title', shiftTitleInput.value));
     shiftTypeInput.addEventListener('blur', () => updateShiftData('shift_type', shiftTypeInput.value));
     shiftLengthHrsInput.addEventListener('blur', () => updateShiftData('shift_length_hours', shiftLengthHrsInput.value));
-    goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData('goal_wrvu_per_hr', goalWrvuPerHourInput.value));
+    goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData('goal_wrvu_per_hour', goalWrvuPerHourInput.value));
     shiftStartTimeInput.addEventListener('blur', () => updateShiftData('shift_start_time', shiftStartTimeInput.value));
 }
 
