@@ -386,18 +386,6 @@ button:hover {
     gap: 16px;
 }
 
-.nav-link {
-    color: var(--text-primary);
-    text-decoration: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
-}
-
-.nav-link:hover {
-    background-color: var(--background-input);
-}
-
 /* Dropdown Functionality */
 .dropdown {
     position: relative;
