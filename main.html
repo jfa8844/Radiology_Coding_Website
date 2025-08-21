@@ -40,134 +40,15 @@
         </div>
     </div>
     <div class="dashboard-section shift-controls">
+        <button id="save-layout-btn">Save Layout</button>
         <button id="end-shift-btn">End Shift</button>
         <button id="logout-btn">Logout</button>
     </div>
 </header>
 
-    <main class="procedure-grid">
-        <div class="procedure-card" data-procedure-id="101" data-default-row="1" data-default-col="1">
-            <div class="card-header">
-                <h3>CT Abdomen Pelvis w/ IV Contrast</h3>
-                <p>CTAP</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="102" data-default-row="1" data-default-col="2">
-            <div class="card-header">
-                <h3>CT Head w/o Contrast</h3>
-                <p>CTH</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="103" data-default-row="1" data-default-col="3">
-            <div class="card-header">
-                <h3>XR Chest 1 View</h3>
-                <p>CXR1</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="104" data-default-row="1" data-default-col="4">
-            <div class="card-header">
-                <h3>US RUQ</h3>
-                <p>USRUQ</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="105" data-default-row="2" data-default-col="1">
-            <div class="card-header">
-                <h3>CT PE Study</h3>
-                <p>CTPE</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="106" data-default-row="2" data-default-col="2">
-            <div class="card-header">
-                <h3>MRI Brain w/o Contrast</h3>
-                <p>MRIB</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="107" data-default-row="2" data-default-col="3">
-            <div class="card-header">
-                <h3>XR KUB</h3>
-                <p>KUB</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="108" data-default-row="2" data-default-col="4">
-            <div class="card-header">
-                <h3>US Renal</h3>
-                <p>USREN</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="109" data-default-row="3" data-default-col="1">
-            <div class="card-header">
-                <h3>CT Cervical Spine w/o Contrast</h3>
-                <p>CTCS</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="110" data-default-row="3" data-default-col="2">
-            <div class="card-header">
-                <h3>MRI Lumbar Spine w/o Contrast</h3>
-                <p>MRILS</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="111" data-default-row="3" data-default-col="3">
-            <div class="card-header">
-                <h3>XR Abdomen 2 Views</h3>
-                <p>AXR2</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-        <div class="procedure-card" data-procedure-id="112" data-default-row="3" data-default-col="4">
-            <div class="card-header">
-                <h3>US Thyroid</h3>
-                <p>USTHY</p>
-            </div>
-            <div class="card-controls">
-                <div class="case-count">0</div>
-                <button class="increment-btn">+</button>
-            </div>
-        </div>
-    </main>
+    <main class="procedure-grid"></main>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
