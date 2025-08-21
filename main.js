@@ -5,6 +5,7 @@ const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // DOM element references
 const logoutButton = document.getElementById('logout-btn');
+const saveLayoutButton = document.getElementById('save-layout-btn');
 const shiftStartTimeInput = document.getElementById('shift-start-time');
 const goalWrvuPerHourInput = document.getElementById('goal-wrvu-per-hr');
 const totalWrvuValue = document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value');
@@ -24,6 +25,41 @@ logoutButton.addEventListener('click', async () => {
     await supaClient.auth.signOut();
     window.location.href = 'index.html';
 });
+
+// Save layout functionality
+saveLayoutButton.addEventListener('click', async () => {
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) {
+        alert('You must be logged in to save a layout.');
+        return;
+    }
+
+    const cards = document.querySelectorAll('.procedure-grid .procedure-card');
+    const layoutData = [];
+    const columns = 5;
+
+    cards.forEach((card, index) => {
+        const procedureId = card.getAttribute('data-procedure-id');
+        layoutData.push({
+            user_id: user.id,
+            procedure_id: parseInt(procedureId),
+            display_row: Math.floor(index / columns) + 1,
+            display_column: (index % columns) + 1,
+        });
+    });
+
+    const { error } = await supaClient
+        .from('user_procedure_preferences')
+        .upsert(layoutData, { onConflict: 'user_id, procedure_id' });
+
+    if (error) {
+        console.error('Error saving layout:', error);
+        alert('Failed to save layout.');
+    } else {
+        alert('Layout saved successfully!');
+    }
+});
+
 
 function updateDashboard() {
     const cards = document.querySelectorAll('.procedure-card');
@@ -93,21 +129,74 @@ function updateDashboard() {
 
 async function loadProcedures() {
     const procedureGrid = document.querySelector('.procedure-grid');
-    procedureGrid.innerHTML = ''; // Clear existing static cards
+    procedureGrid.innerHTML = ''; // Clear existing cards
 
-    const { data, error } = await supaClient
-        .from('procedures')
-        .select('id, abbreviation, description, wrvu, modality, default_row, default_column')
-        .eq('default_display', true);
+    const { data: { user } } = await supaClient.auth.getUser();
 
-    if (error) {
-        console.error('Error fetching procedures:', error);
-        return;
+    let procedureDetails;
+
+    if (user) {
+        // User is logged in, try to fetch their preferences
+        const { data: preferences, error: prefError } = await supaClient
+            .from('user_procedure_preferences')
+            .select('procedure_id, display_row, display_column')
+            .eq('user_id', user.id);
+
+        if (prefError) {
+            console.error('Error fetching user preferences:', prefError);
+        }
+
+        if (preferences && preferences.length > 0) {
+            // User has a saved layout
+            const procedureIds = preferences.map(p => p.procedure_id);
+            const { data, error } = await supaClient
+                .from('procedures')
+                .select('id, abbreviation, description, wrvu, modality')
+                .in('id', procedureIds);
+
+            if (error) {
+                console.error('Error fetching procedures based on preferences:', error);
+                // Fallback to default in case of error
+            } else {
+                 procedureDetails = data.map(proc => {
+                    const pref = preferences.find(p => p.procedure_id === proc.id);
+                    return { ...proc, display_row: pref.display_row, display_column: pref.display_column };
+                }).sort((a, b) => {
+                    if (a.display_row !== b.display_row) {
+                        return a.display_row - b.display_row;
+                    }
+                    return a.display_column - b.display_column;
+                });
+            }
+        }
     }
 
-    data.forEach(procedure => {
+    // If procedureDetails is not set yet (no user, no preferences, or an error), load default
+    if (!procedureDetails) {
+        const { data, error } = await supaClient
+            .from('procedures')
+            .select('id, abbreviation, description, wrvu, modality, default_row, default_column')
+            .eq('default_display', true);
+
+        if (error) {
+            console.error('Error fetching default procedures:', error);
+            return;
+        }
+        procedureDetails = data.map(proc => ({
+            ...proc,
+            display_row: proc.default_row,
+            display_column: proc.default_column
+        })).sort((a,b) => {
+            if (a.display_row !== b.display_row) {
+                return a.display_row - b.display_row;
+            }
+            return a.display_column - b.display_column;
+        });
+    }
+
+    procedureDetails.forEach(procedure => {
         const cardHTML = `
-            <div class="procedure-card" style="grid-row-start: ${procedure.default_row}; grid-column-start: ${procedure.default_column};" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
+            <div class="procedure-card" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
                 <div class="card-header">
                     <h3>${procedure.abbreviation} (${procedure.wrvu})</h3>
                 </div>
@@ -120,9 +209,16 @@ async function loadProcedures() {
         procedureGrid.innerHTML += cardHTML;
     });
 
+    // Initialize SortableJS
+    new Sortable(procedureGrid, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+    });
+
     attachEventListeners();
-    updateDashboard(); // Initial call to set dashboard to 0
+    updateDashboard();
 }
+
 
 function attachEventListeners() {
     // Increment button functionality
