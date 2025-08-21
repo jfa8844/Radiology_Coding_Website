@@ -35,17 +35,19 @@ saveLayoutButton.addEventListener('click', async () => {
         return;
     }
 
-    const cards = document.querySelectorAll('.procedure-grid .procedure-card');
     const layoutData = [];
-    const columns = 5;
+    const columns = document.querySelectorAll('.procedure-grid .grid-column');
 
-    cards.forEach((card, index) => {
-        const procedureId = card.getAttribute('data-procedure-id');
-        layoutData.push({
-            user_id: user.id,
-            procedure_id: parseInt(procedureId),
-            display_row: Math.floor(index / columns) + 1,
-            display_column: (index % columns) + 1,
+    columns.forEach((column, columnIndex) => {
+        const cards = column.querySelectorAll('.procedure-card');
+        cards.forEach((card, rowIndex) => {
+            const procedureId = card.getAttribute('data-procedure-id');
+            layoutData.push({
+                user_id: user.id,
+                procedure_id: parseInt(procedureId),
+                display_row: rowIndex + 1, // 1-based index
+                display_column: columnIndex + 1, // 1-based index
+            });
         });
     });
 
@@ -224,25 +226,50 @@ async function loadProcedures() {
         });
     }
 
+    // Create column containers
+    const numColumns = 6;
+    for (let i = 0; i < numColumns; i++) {
+        const column = document.createElement('div');
+        column.className = 'grid-column';
+        procedureGrid.appendChild(column);
+    }
+
+    const columns = procedureGrid.querySelectorAll('.grid-column');
+
     procedureDetails.forEach(procedure => {
-        const cardHTML = `
-            <div class="procedure-card" data-procedure-id="${procedure.id}" data-wrvu="${procedure.wrvu}" data-modality="${procedure.modality}">
-                <div class="card-header">
-                    <h3>${procedure.abbreviation} (${procedure.wrvu})</h3>
-                </div>
-                <div class="card-controls">
-                    <div class="case-count">0</div>
-                    <button class="increment-btn">+</button>
-                </div>
+        const card = document.createElement('div');
+        card.className = 'procedure-card';
+        card.setAttribute('data-procedure-id', procedure.id);
+        card.setAttribute('data-wrvu', procedure.wrvu);
+        card.setAttribute('data-modality', procedure.modality);
+        card.innerHTML = `
+            <div class="card-header">
+                <h3>${procedure.abbreviation} (${procedure.wrvu})</h3>
+            </div>
+            <div class="card-controls">
+                <div class="case-count">0</div>
+                <button class="increment-btn">+</button>
             </div>
         `;
-        procedureGrid.innerHTML += cardHTML;
+
+        // Append to the correct column, adjusting for 1-based indexing
+        const columnIndex = procedure.display_column - 1;
+        if (columns[columnIndex]) {
+            columns[columnIndex].appendChild(card);
+        } else {
+            console.warn(`Could not find column for procedure: ${procedure.abbreviation}`);
+            // As a fallback, append to the first column
+            columns[0].appendChild(card);
+        }
     });
 
-    // Initialize SortableJS
-    new Sortable(procedureGrid, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
+    // Initialize SortableJS for each column
+    document.querySelectorAll('.grid-column').forEach(column => {
+        new Sortable(column, {
+            group: 'procedures', // Allow dragging between columns
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+        });
     });
 
     attachEventListeners();
