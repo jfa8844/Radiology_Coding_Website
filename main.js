@@ -299,6 +299,21 @@ async function loadProcedures() {
     const procedureGrid = document.querySelector('.procedure-grid');
     procedureGrid.innerHTML = ''; // Clear existing cards
 
+    // Fetch saved counts for the active shift
+    let shiftEntries = [];
+    if (activeShiftId) {
+        const { data, error } = await supaClient
+            .from('shift_entries')
+            .select('procedure_id, count')
+            .eq('shift_id', activeShiftId);
+
+        if (error) {
+            console.error('Error fetching shift entries:', error);
+        } else {
+            shiftEntries = data;
+        }
+    }
+
     const { data: { user } } = await supaClient.auth.getUser();
 
     let procedureDetails;
@@ -381,12 +396,16 @@ async function loadProcedures() {
         card.setAttribute('data-procedure-id', procedure.id);
         card.setAttribute('data-wrvu', procedure.wrvu);
         card.setAttribute('data-modality', procedure.modality);
+
+        const entry = shiftEntries.find(e => e.procedure_id === procedure.id);
+        const count = entry ? entry.count : 0;
+
         card.innerHTML = `
             <div class="card-header">
                 <h3>${procedure.abbreviation} (${procedure.wrvu})</h3>
             </div>
             <div class="card-controls">
-                <div class="case-count">0</div>
+                <div class="case-count">${count}</div>
                 <button class="increment-btn">+</button>
             </div>
         `;
