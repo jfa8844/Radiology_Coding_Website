@@ -12,6 +12,7 @@ const saveLayoutButton = document.getElementById('save-layout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
 const shiftTitleInput = document.getElementById('shift-title');
 const shiftTypeInput = document.getElementById('shift-type');
+const shiftLengthHrsInput = document.getElementById('shift-length-hrs');
 const shiftStartTimeInput = document.getElementById('shift-start-time');
 const goalWrvuPerHourInput = document.getElementById('goal-wrvu-per-hr');
 const totalWrvuValue = document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value');
@@ -176,6 +177,25 @@ async function getOrCreateActiveShift() {
         }
 
         return activeShiftId;
+    }
+}
+
+async function updateShiftData(field, value) {
+    const activeShiftId = await getOrCreateActiveShift();
+    if (!activeShiftId) {
+        console.error("No active shift ID found. Cannot update shift data.");
+        return;
+    }
+
+    const updateObject = { [field]: value };
+
+    const { error } = await supaClient
+        .from('shifts')
+        .update(updateObject)
+        .eq('id', activeShiftId);
+
+    if (error) {
+        console.error(`Error updating ${field}:`, error);
     }
 }
 
@@ -407,6 +427,13 @@ function attachEventListeners() {
     // Listen for changes on the new inputs
     shiftStartTimeInput.addEventListener('change', updateDashboard);
     goalWrvuPerHourInput.addEventListener('change', updateDashboard);
+
+    // Add blur event listeners for real-time saving
+    shiftTitleInput.addEventListener('blur', () => updateShiftData('shift_title', shiftTitleInput.value));
+    shiftTypeInput.addEventListener('blur', () => updateShiftData('shift_type', shiftTypeInput.value));
+    shiftLengthHrsInput.addEventListener('blur', () => updateShiftData('shift_length_hrs', shiftLengthHrsInput.value));
+    goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData('goal_wrvu_per_hr', goalWrvuPerHourInput.value));
+    shiftStartTimeInput.addEventListener('blur', () => updateShiftData('shift_start_time', shiftStartTimeInput.value));
 }
 
 async function initializeApp() {
