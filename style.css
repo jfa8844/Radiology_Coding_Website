@@ -168,6 +168,7 @@ button:hover {
     gap: 32px;
     max-width: 1600px;
     margin: 0 auto;
+    margin-bottom: 20px;
 }
 
 
@@ -175,6 +176,7 @@ button:hover {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex: 1 1 auto;
 }
 
 .shift-info {
