@@ -1,4 +1,5 @@
 // supabase initialization
+let activeShiftId = null;
 const SUPABASE_URL = 'https://byvclyemwwoxhhzsfwrh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dmNseWVtd3dveGhoenNmd3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NjYwNzYsImV4cCI6MjA3MTA0MjA3Nn0.6Wy4Xm02bskAZPXMJMudWgtoUqlZNIp0UDAQibr3jwM';
 const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -9,6 +10,8 @@ const dropdownMenu = document.getElementById('dropdown-menu');
 const logoutButton = document.getElementById('logout-btn');
 const saveLayoutButton = document.getElementById('save-layout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
+const shiftTitleInput = document.getElementById('shift-title');
+const shiftTypeInput = document.getElementById('shift-type');
 const shiftStartTimeInput = document.getElementById('shift-start-time');
 const goalWrvuPerHourInput = document.getElementById('goal-wrvu-per-hr');
 const totalWrvuValue = document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value');
@@ -103,6 +106,78 @@ resetLayoutButton.addEventListener('click', async () => {
         alert('Failed to reset layout.');
     }
 });
+
+async function getOrCreateActiveShift() {
+    if (activeShiftId) {
+        return activeShiftId;
+    }
+
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) {
+        // Redirect to login or handle error if no user is found
+        window.location.href = 'index.html';
+        return null;
+    }
+
+    // Check for an existing unfinished shift
+    const { data: existingShift, error: existingShiftError } = await supaClient
+        .from('shifts')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('shift_end_time', null)
+        .single();
+
+    if (existingShiftError && existingShiftError.code !== 'PGRST116') { // Ignore 'single row not found' error
+        console.error('Error fetching existing shift:', existingShiftError);
+        return null;
+    }
+
+    if (existingShift) {
+        // Populate dashboard with existing shift data
+        activeShiftId = existingShift.id;
+        shiftTitleInput.value = existingShift.shift_title || '';
+        shiftTypeInput.value = existingShift.shift_type || '';
+
+        // Format the date for the datetime-local input
+        if (existingShift.shift_start_time) {
+            const startTime = new Date(existingShift.shift_start_time);
+            // Adjust for timezone offset to display correctly in the user's local time
+            const timezoneOffset = startTime.getTimezoneOffset() * 60000;
+            const localTime = new Date(startTime.getTime() - timezoneOffset);
+            shiftStartTimeInput.value = localTime.toISOString().slice(0, 16);
+        }
+
+        return activeShiftId;
+    } else {
+        // Create a new shift
+        const newShift = {
+            user_id: user.id,
+            shift_start_time: shiftStartTimeInput.value || new Date().toISOString(),
+        };
+
+        const { data: createdShift, error: createError } = await supaClient
+            .from('shifts')
+            .insert(newShift)
+            .select()
+            .single();
+
+        if (createError) {
+            console.error('Error creating new shift:', createError);
+            return null;
+        }
+
+        activeShiftId = createdShift.id;
+        // Optionally, set the start time input to the value that was just saved
+        if (!shiftStartTimeInput.value) {
+            const startTime = new Date(createdShift.shift_start_time);
+            const timezoneOffset = startTime.getTimezoneOffset() * 60000;
+            const localTime = new Date(startTime.getTime() - timezoneOffset);
+            shiftStartTimeInput.value = localTime.toISOString().slice(0, 16);
+        }
+
+        return activeShiftId;
+    }
+}
 
 
 function updateDashboard() {
@@ -334,6 +409,11 @@ function attachEventListeners() {
     goalWrvuPerHourInput.addEventListener('change', updateDashboard);
 }
 
-loadProcedures();
+async function initializeApp() {
+    await getOrCreateActiveShift();
+    await loadProcedures();
+}
+
+initializeApp();
 
 setInterval(updateDashboard, 60000);
