@@ -6,6 +6,7 @@ const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // DOM element references
 const logoutButton = document.getElementById('logout-btn');
 const saveLayoutButton = document.getElementById('save-layout-btn');
+const resetLayoutButton = document.getElementById('reset-layout-btn');
 const shiftStartTimeInput = document.getElementById('shift-start-time');
 const goalWrvuPerHourInput = document.getElementById('goal-wrvu-per-hr');
 const totalWrvuValue = document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value');
@@ -57,6 +58,32 @@ saveLayoutButton.addEventListener('click', async () => {
         alert('Failed to save layout.');
     } else {
         alert('Layout saved successfully!');
+    }
+});
+
+// Reset layout functionality
+resetLayoutButton.addEventListener('click', async () => {
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) {
+        alert('You must be logged in to reset a layout.');
+        return;
+    }
+
+    try {
+        const { error } = await supaClient
+            .from('user_procedure_preferences')
+            .update({ display_column: null, display_row: null })
+            .eq('user_id', user.id);
+
+        if (error) {
+            throw error;
+        }
+
+        alert('Layout has been reset.');
+        loadProcedures();
+    } catch (error) {
+        console.error('Error resetting layout:', error);
+        alert('Failed to reset layout.');
     }
 });
 
