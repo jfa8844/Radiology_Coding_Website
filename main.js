@@ -49,7 +49,16 @@ logoutButton.addEventListener('click', async () => {
 
 endShiftButton.addEventListener('click', async () => {
     // The confirm() popup does not work in this environment, so we proceed directly.
-    await updateShiftData('shift_end_time', new Date().toISOString());
+    const totalWrvu = parseFloat(totalWrvuValue.textContent);
+    const actualWrvuPerHour = parseFloat(wrvuPerHourValue.textContent);
+
+    const shiftUpdate = {
+        shift_end_time: new Date().toISOString(),
+        total_wrvu: totalWrvu,
+        actual_wrvu_per_hour: actualWrvuPerHour,
+    };
+
+    await updateShiftData(shiftUpdate);
     // The alert() popup is also removed. The page will reload to reflect the ended shift.
     location.reload();
 });
@@ -219,14 +228,12 @@ async function updateProcedureCount(procedureId, newCount) {
     }
 }
 
-async function updateShiftData(field, value) {
+async function updateShiftData(updateObject) {
     const activeShiftId = await getOrCreateActiveShift();
     if (!activeShiftId) {
         console.error("No active shift ID found. Cannot update shift data.");
         return;
     }
-
-    const updateObject = { [field]: value };
 
     const { error } = await supaClient
         .from('shifts')
@@ -234,7 +241,7 @@ async function updateShiftData(field, value) {
         .eq('id', activeShiftId);
 
     if (error) {
-        console.error(`Error updating ${field}:`, error);
+        console.error(`Error updating shift:`, error);
     }
 }
 
@@ -497,11 +504,11 @@ function attachEventListeners() {
     goalWrvuPerHourInput.addEventListener('change', updateDashboard);
 
     // Add blur event listeners for real-time saving
-    shiftTitleInput.addEventListener('blur', () => updateShiftData('shift_title', shiftTitleInput.value));
-    shiftTypeInput.addEventListener('blur', () => updateShiftData('shift_type', shiftTypeInput.value));
-    shiftLengthHrsInput.addEventListener('blur', () => updateShiftData('shift_length_hours', shiftLengthHrsInput.value));
-    goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData('goal_wrvu_per_hour', goalWrvuPerHourInput.value));
-    shiftStartTimeInput.addEventListener('blur', () => updateShiftData('shift_start_time', shiftStartTimeInput.value));
+    shiftTitleInput.addEventListener('blur', () => updateShiftData({ shift_title: shiftTitleInput.value }));
+    shiftTypeInput.addEventListener('blur', () => updateShiftData({ shift_type: shiftTypeInput.value }));
+    shiftLengthHrsInput.addEventListener('blur', () => updateShiftData({ shift_length_hours: shiftLengthHrsInput.value }));
+    goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData({ goal_wrvu_per_hour: goalWrvuPerHourInput.value }));
+    shiftStartTimeInput.addEventListener('blur', () => updateShiftData({ shift_start_time: shiftStartTimeInput.value }));
 }
 
 async function initializeApp() {
