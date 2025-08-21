@@ -284,8 +284,8 @@ button:hover {
 /* Procedure Grid */
 .procedure-grid {
     display: flex;
-    gap: 20px;
-    padding: 20px;
+    gap: 10px;
+    padding: 10px;
     max-width: 1600px;
     margin: 0 auto;
     align-items: flex-start; /* Align columns to the top */
@@ -304,14 +304,13 @@ button:hover {
     background-color: var(--background-secondary);
     border: 1px solid var(--border-primary);
     border-radius: 6px; /* Slightly smaller radius */
-    padding: 8px 12px; /* Reduced padding */
+    padding: 4px 8px; /* Reduced padding */
     display: flex;
     flex-direction: row; /* Horizontal layout */
     justify-content: space-between; /* Pushes header and controls apart */
     align-items: center; /* Vertically centers items */
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     transition: box-shadow 0.2s;
-    height: 50px; /* Greatly reduced height */
     box-sizing: border-box;
 }
 
@@ -329,7 +328,7 @@ button:hover {
 }
 
 .card-header h3 {
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--text-light);
     margin: 0 0 2px 0;
     text-overflow: ellipsis;
@@ -345,7 +344,7 @@ button:hover {
 .card-controls {
     display: flex;
     align-items: center;
-    gap: 12px; /* Space between count and button */
+    gap: 8px; /* Space between count and button */
     flex-shrink: 0; /* Prevents controls from shrinking */
 }
 
