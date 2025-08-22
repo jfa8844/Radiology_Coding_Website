@@ -237,6 +237,7 @@ button:hover {
     background-color: var(--background-primary);
     min-width: 100px; /* Ensure items have a consistent width */
     text-align: center;
+    box-sizing: border-box;
 }
 
 .metric-title {
@@ -580,4 +581,16 @@ button:hover {
 /* Adjust label font size for the more compact view */
 .main-nav .shift-info-inputs label {
     font-size: 0.75em;
+}
+
+.pace-ahead {
+    border: 10px solid var(--success);
+}
+
+.pace-behind {
+    border: 10px solid #FFA500;
+}
+
+.pace-neutral {
+    border: 10px solid var(--border-primary);
 }
