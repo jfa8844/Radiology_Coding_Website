@@ -321,14 +321,28 @@ function updateDashboard() {
     const actualWrvuPerHour = totalWrvu / elapsedHours;
     wrvuPerHourValue.textContent = actualWrvuPerHour.toFixed(2);
 
+    const paceBox = document.getElementById('pace-metric-item');
+
     if (isNaN(goalWrvuPerHour) || goalWrvuPerHour <= 0) {
         paceValue.textContent = "0h 0m";
+        paceBox.classList.remove('pace-ahead', 'pace-behind');
+        paceBox.classList.add('pace-neutral');
         return;
     }
 
     const targetWrvus = goalWrvuPerHour * elapsedHours;
     const wrvuDifference = totalWrvu - targetWrvus;
     const paceMinutes = (wrvuDifference / goalWrvuPerHour) * 60;
+
+    paceBox.classList.remove('pace-ahead', 'pace-behind', 'pace-neutral');
+
+    if (paceMinutes > 0) {
+        paceBox.classList.add('pace-ahead');
+    } else if (paceMinutes < 0) {
+        paceBox.classList.add('pace-behind');
+    } else {
+        paceBox.classList.add('pace-neutral');
+    }
 
     const sign = paceMinutes < 0 ? "-" : "+";
     const absPaceMinutes = Math.abs(paceMinutes);
