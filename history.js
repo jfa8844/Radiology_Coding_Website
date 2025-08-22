@@ -36,6 +36,8 @@ async function loadHistory() {
     historyTableBody.innerHTML = ''; // Clear existing rows
     shifts.forEach(shift => {
         const row = document.createElement('tr');
+        row.setAttribute('data-shift-id', shift.id);
+        row.style.cursor = 'pointer';
 
         const startDate = new Date(shift.shift_start_time).toLocaleDateString();
 
@@ -50,6 +52,15 @@ async function loadHistory() {
         historyTableBody.appendChild(row);
     });
 }
+
+// Event listener for clicking on a shift row
+historyTableBody.addEventListener('click', (event) => {
+    const row = event.target.closest('tr');
+    if (row && row.dataset.shiftId) {
+        const shiftId = row.dataset.shiftId;
+        window.location.href = `shift-detail.html?shift_id=${shiftId}`;
+    }
+});
 
 // Logout functionality
 logoutButton.addEventListener('click', async () => {
