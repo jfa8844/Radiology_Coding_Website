@@ -510,3 +510,15 @@ button:hover {
 #start-shift-modal.modal-visible {
     display: flex;
 }
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* Creates a small space between the label and the input */
+}
+
+.shift-info-inputs label {
+    font-size: 0.8em;
+    color: var(--text-tertiary); /* A light grey color from the existing theme */
+    font-weight: bold;
+}
