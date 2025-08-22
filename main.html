@@ -23,38 +23,38 @@
         </div>
     </nav>
     <header class="dashboard-container">
-    <div class="dashboard-section shift-info">
-        <div class="shift-info-inputs">
-            <input type="text" id="shift-title" placeholder="Shift Title">
-            <input type="text" id="shift-type" placeholder="Shift Type">
-            <input type="number" id="shift-length-hrs" class="input-narrow" placeholder="Shift Length (hrs)">
-            <input type="number" class="input-narrow" id="goal-wrvu-per-hr" placeholder="Goal wRVU/hr">
-            <input type="datetime-local" id="shift-start-time">
+        <div class="dashboard-section live-metrics">
+            <div class="metric-item">
+                <span class="metric-title">Total wrvu</span>
+                <span class="metric-value">0</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-title">wrvu/hr</span>
+                <span class="metric-value">0</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-title">Pace</span>
+                <span class="metric-value">0h 0m</span>
+            </div>
         </div>
-        <div class="modality-trackers">
-            <div class="modality-item"><span class="modality-name">Total</span><span class="modality-value">0</span></div>
-            <div class="modality-item"><span class="modality-name">CT</span><span class="modality-value">0</span></div>
-            <div class="modality-item"><span class="modality-name">MRI</span><span class="modality-value">0</span></div>
-            <div class="modality-item"><span class="modality-name">XR</span><span class="modality-value">0</span></div>
-            <div class="modality-item"><span class="modality-name">US</span><span class="modality-value">0</span></div>
-            <div class="modality-item"><span class="modality-name">NM</span><span class="modality-value">0</span></div>
+        <div class="dashboard-section shift-info">
+            <div class="shift-info-inputs">
+                <input type="text" id="shift-title" placeholder="Shift Title">
+                <input type="text" id="shift-type" placeholder="Shift Type">
+                <input type="number" id="shift-length-hrs" class="input-narrow" placeholder="Shift Length (hrs)">
+                <input type="number" class="input-narrow" id="goal-wrvu-per-hr" placeholder="Goal wRVU/hr">
+                <input type="datetime-local" id="shift-start-time">
+            </div>
+            <div class="modality-trackers">
+                <div class="modality-item"><span class="modality-name">Total</span><span class="modality-value">0</span></div>
+                <div class="modality-item"><span class="modality-name">CT</span><span class="modality-value">0</span></div>
+                <div class="modality-item"><span class="modality-name">MRI</span><span class="modality-value">0</span></div>
+                <div class="modality-item"><span class="modality-name">XR</span><span class="modality-value">0</span></div>
+                <div class="modality-item"><span class="modality-name">US</span><span class="modality-value">0</span></div>
+                <div class="modality-item"><span class="modality-name">NM</span><span class="modality-value">0</span></div>
+            </div>
         </div>
-    </div>
-    <div class="dashboard-section live-metrics">
-        <div class="metric-item">
-            <span class="metric-title">Total wrvu</span>
-            <span class="metric-value">0</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-title">wrvu/hr</span>
-            <span class="metric-value">0</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-title">Pace</span>
-            <span class="metric-value">0h 0m</span>
-        </div>
-    </div>
-</header>
+    </header>
 
     <main class="procedure-grid"></main>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
