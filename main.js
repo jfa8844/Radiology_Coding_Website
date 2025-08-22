@@ -1,5 +1,14 @@
 // supabase initialization
 let activeShiftId = null;
+
+function getCombinedStartTime() {
+    const date = shiftStartDateInput.value;
+    const time = shiftStartTimeField.value;
+    if (date && time) {
+        return `${date}T${time}`;
+    }
+    return null;
+}
 const SUPABASE_URL = 'https://byvclyemwwoxhhzsfwrh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dmNseWVtd3dveGhoenNmd3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NjYwNzYsImV4cCI6MjA3MTA0MjA3Nn0.6Wy4Xm02bskAZPXMJMudWgtoUqlZNIp0UDAQibr3jwM';
 const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -15,7 +24,8 @@ const endShiftButton = document.getElementById('end-shift-btn');
 const shiftTitleInput = document.getElementById('shift-title');
 const shiftTypeInput = document.getElementById('shift-type');
 const shiftLengthHrsInput = document.getElementById('shift-length-hrs');
-const shiftStartTimeInput = document.getElementById('shift-start-time');
+const shiftStartDateInput = document.getElementById('shift-start-date');
+const shiftStartTimeField = document.getElementById('shift-start-time-field');
 const goalWrvuPerHourInput = document.getElementById('goal-wrvu-per-hr');
 const totalWrvuValue = document.querySelector('.live-metrics .metric-item:nth-child(1) .metric-value');
 const wrvuPerHourValue = document.querySelector('.live-metrics .metric-item:nth-child(2) .metric-value');
@@ -197,13 +207,14 @@ async function getOrCreateActiveShift() {
         shiftLengthHrsInput.value = existingShift.shift_length_hours || '';
         goalWrvuPerHourInput.value = existingShift.goal_wrvu_per_hour || '';
 
-        // Format the date for the datetime-local input
         if (existingShift.shift_start_time) {
             const startTime = new Date(existingShift.shift_start_time);
-            // Adjust for timezone offset to display correctly in the user's local time
             const timezoneOffset = startTime.getTimezoneOffset() * 60000;
             const localTime = new Date(startTime.getTime() - timezoneOffset);
-            shiftStartTimeInput.value = localTime.toISOString().slice(0, 16);
+            const localISOString = localTime.toISOString();
+
+            shiftStartDateInput.value = localISOString.slice(0, 10); // YYYY-MM-DD
+            shiftStartTimeField.value = localISOString.slice(11, 16); // HH:mm
         }
 
         return activeShiftId;
@@ -290,7 +301,7 @@ function updateDashboard() {
     modalityValues.NM.textContent = modalityCounts.NM;
 
     // Time-based calculations
-    const shiftStartTime = shiftStartTimeInput.value;
+    const shiftStartTime = getCombinedStartTime();
     const goalWrvuPerHour = parseFloat(goalWrvuPerHourInput.value);
 
     if (!shiftStartTime) {
@@ -515,7 +526,6 @@ function attachEventListeners() {
     });
 
     // Listen for changes on the new inputs
-    shiftStartTimeInput.addEventListener('change', updateDashboard);
     goalWrvuPerHourInput.addEventListener('change', updateDashboard);
 
     // Add blur event listeners for real-time saving
@@ -523,7 +533,19 @@ function attachEventListeners() {
     shiftTypeInput.addEventListener('blur', () => updateShiftData({ shift_type: shiftTypeInput.value }));
     shiftLengthHrsInput.addEventListener('blur', () => updateShiftData({ shift_length_hours: shiftLengthHrsInput.value }));
     goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData({ goal_wrvu_per_hour: goalWrvuPerHourInput.value }));
-    shiftStartTimeInput.addEventListener('blur', () => updateShiftData({ shift_start_time: shiftStartTimeInput.value }));
+
+    function saveShiftStartTime() {
+        const combinedStartTime = getCombinedStartTime();
+        if (combinedStartTime) {
+            updateShiftData({ shift_start_time: combinedStartTime });
+        }
+    }
+
+    shiftStartDateInput.addEventListener('change', updateDashboard);
+    shiftStartTimeField.addEventListener('change', updateDashboard);
+
+    shiftStartDateInput.addEventListener('blur', saveShiftStartTime);
+    shiftStartTimeField.addEventListener('blur', saveShiftStartTime);
 }
 
 async function initializeApp() {

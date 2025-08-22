@@ -552,16 +552,18 @@ button:hover {
 /* Make the input boxes themselves smaller to fit in the bar */
 .main-nav input[type="text"],
 .main-nav input[type="number"],
-.main-nav input[type="datetime-local"] {
+.main-nav input[type="date"],
+.main-nav input[type="time"] {
     padding: 5px 8px;
     font-size: 0.9em;
-    min-width: 130px; /* Give a consistent base width */
+    min-width: 85px; /* Reduced from 130px */
+    font-family: inherit; /* Ensures consistent font */
 }
 
 /* Adjust the specifically narrow inputs */
 .main-nav .input-narrow {
-    min-width: 110px;
-    width: 110px;
+    min-width: 70px; /* Reduced from 110px */
+    width: 70px; /* Reduced from 110px */
 }
 
 /* Adjust label font size for the more compact view */
