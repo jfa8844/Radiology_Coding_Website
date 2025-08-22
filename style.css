@@ -157,7 +157,7 @@ button:hover {
     top: 0;
     z-index: 1000;
     background-color: var(--background-secondary);
-    padding: 16px 32px;
+    padding: 8px 32px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     border-bottom: 1px solid var(--border-primary);
     height: 120px;
