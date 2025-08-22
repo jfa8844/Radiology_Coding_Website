@@ -5,34 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Start Shift</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class="start-container">
-        <h1>Welcome</h1>
-        <p>You do not have an active shift.</p>
+    <nav>
+        <a href="history.html">History</a>
+        <button id="logout-btn">Logout</button>
+    </nav>
+    <main>
+        <h1>Ready to Begin?</h1>
         <button id="start-shift-btn">Start New Shift</button>
-    </div>
+    </main>
 
-    <div id="start-shift-modal" class="modal">
+    <div id="start-shift-modal" class="modal" style="display: none;">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Start New Shift</h2>
-            <form id="start-shift-form">
-                <label for="shift-title">Shift Title:</label>
-                <input type="text" id="shift-title" name="shift-title">
-
-                <label for="shift-type">Shift Type:</label>
-                <input type="text" id="shift-type" name="shift-type">
-
-                <label for="shift-start-time">Start Time:</label>
-                <input type="datetime-local" id="shift-start-time" name="shift-start-time" required>
-
-                <button type="submit">Confirm Start</button>
-            </form>
+            <h2>Confirm Shift Start Time</h2>
+            <input type="datetime-local" id="shift-start-time-input">
+            <button id="confirm-start-btn">Confirm</button>
+            <button id="cancel-start-btn">Cancel</button>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="start.js"></script>
 </body>
 </html>

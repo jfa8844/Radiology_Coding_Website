@@ -169,33 +169,9 @@ async function getOrCreateActiveShift() {
 
         return activeShiftId;
     } else {
-        // Create a new shift
-        const newShift = {
-            user_id: user.id,
-            shift_start_time: shiftStartTimeInput.value || new Date().toISOString(),
-        };
-
-        const { data: createdShift, error: createError } = await supaClient
-            .from('shifts')
-            .insert(newShift)
-            .select()
-            .single();
-
-        if (createError) {
-            console.error('Error creating new shift:', createError);
-            return null;
-        }
-
-        activeShiftId = createdShift.id;
-        // Optionally, set the start time input to the value that was just saved
-        if (!shiftStartTimeInput.value) {
-            const startTime = new Date(createdShift.shift_start_time);
-            const timezoneOffset = startTime.getTimezoneOffset() * 60000;
-            const localTime = new Date(startTime.getTime() - timezoneOffset);
-            shiftStartTimeInput.value = localTime.toISOString().slice(0, 16);
-        }
-
-        return activeShiftId;
+        // If no active shift is found, redirect to the start page.
+        window.location.href = 'start.html';
+        return null; // Return null to stop further execution
     }
 }
 
