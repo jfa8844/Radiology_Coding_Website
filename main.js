@@ -195,7 +195,7 @@ async function getOrCreateActiveShift() {
         shiftTitleInput.value = existingShift.shift_title || '';
         shiftTypeInput.value = existingShift.shift_type || '';
         shiftLengthHrsInput.value = existingShift.shift_length_hours || '';
-        goalWrvuPerHourInput.value = existingShift.goal_wrvu_per_hr || '';
+        goalWrvuPerHourInput.value = existingShift.goal_wrvu_per_hour || '';
 
         // Format the date for the datetime-local input
         if (existingShift.shift_start_time) {
