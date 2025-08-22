@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RadTicker - Shift Details</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="app-body">
+    <nav class="main-nav">
+        <a href="history.html" style="text-decoration: none; color: var(--accent-primary); margin-right: auto; font-weight: bold;">Back to History</a>
+        <div class="nav-controls">
+            <button id="logout-btn">Logout</button>
+        </div>
+    </nav>
+    <main style="padding: 20px; max-width: 1200px; margin: auto;">
+        <h1 id="shift-detail-title" style="text-align: center; margin-bottom: 20px;">Loading Shift Details...</h1>
+        <table id="shift-detail-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: var(--background-secondary);">
+                    <th style="padding: 12px; border: 1px solid var(--border-primary); text-align: left;">Procedure</th>
+                    <th style="padding: 12px; border: 1px solid var(--border-primary); text-align: left;">Description</th>
+                    <th style="padding: 12px; border: 1px solid var(--border-primary); text-align: left;">wRVU</th>
+                    <th style="padding: 12px; border: 1px solid var(--border-primary); text-align: left;">Count</th>
+                </tr>
+            </thead>
+            <tbody id="shift-detail-table-body">
+                <!-- Data will be loaded here -->
+            </tbody>
+        </table>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="shift-detail.js"></script>
+</body>
+</html>
