@@ -246,6 +246,7 @@ button:hover {
 
 .dashboard-container input[type="text"],
 .dashboard-container input[type="number"],
+.dashboard-container input[type="datetime-local"],
 .dashboard-container select {
     padding: 8px 12px;
     background-color: var(--background-input);
