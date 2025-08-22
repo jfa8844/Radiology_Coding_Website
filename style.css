@@ -556,14 +556,15 @@ button:hover {
 .main-nav input[type="time"] {
     padding: 5px 8px;
     font-size: 0.9em;
-    min-width: 85px; /* Reduced from 130px */
+    min-width: 65px; /* Reduced from 130px */
+    width: 65px;
     font-family: inherit; /* Ensures consistent font */
 }
 
 /* Adjust the specifically narrow inputs */
 .main-nav .input-narrow {
-    min-width: 70px; /* Reduced from 110px */
-    width: 70px; /* Reduced from 110px */
+    min-width: 65px; /* Reduced from 110px */
+    width: 65px; /* Reduced from 110px */
 }
 
 /* Adjust label font size for the more compact view */
