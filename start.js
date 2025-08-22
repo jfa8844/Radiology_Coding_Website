@@ -46,9 +46,22 @@ confirmStartBtn.addEventListener('click', async () => {
         return;
     }
 
+    const { data: lastShift, error: lastShiftError } = await supaClient
+        .from('shifts')
+        .select('shift_title, shift_type, shift_length_hours, goal_wrvu_per_hour')
+        .eq('user_id', user.id)
+        .not('shift_end_time', 'is', null)
+        .order('shift_start_time', { ascending: false })
+        .limit(1)
+        .single();
+
     const newShift = {
         user_id: user.id,
         shift_start_time: startTime,
+        shift_title: lastShift?.shift_title || null,
+        shift_type: lastShift?.shift_type || null,
+        shift_length_hours: lastShift?.shift_length_hours || null,
+        goal_wrvu_per_hour: lastShift?.goal_wrvu_per_hour || null
     };
 
     const { error } = await supaClient
