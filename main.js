@@ -59,8 +59,8 @@ endShiftButton.addEventListener('click', async () => {
     };
 
     await updateShiftData(shiftUpdate);
-    // The alert() popup is also removed. The page will reload to reflect the ended shift.
-    location.reload();
+    // The alert() popup is also removed. The page will redirect to the start page.
+    window.location.href = 'start.html';
 });
 
 // Save layout functionality
