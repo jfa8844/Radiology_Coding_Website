@@ -40,11 +40,13 @@ confirmStartBtn.addEventListener('click', async () => {
         return;
     }
 
-    const startTime = shiftStartTimeInput.value;
-    if (!startTime) {
+    const localDateTimeString = shiftStartTimeInput.value;
+    if (!localDateTimeString) {
         alert('Please select a start time.');
         return;
     }
+    const localDate = new Date(localDateTimeString);
+    const utcDateTimeString = localDate.toISOString();
 
     const { data: lastShift, error: lastShiftError } = await supaClient
         .from('shifts')
@@ -57,7 +59,7 @@ confirmStartBtn.addEventListener('click', async () => {
 
     const newShift = {
         user_id: user.id,
-        shift_start_time: startTime,
+        shift_start_time: utcDateTimeString,
         shift_title: lastShift?.shift_title || null,
         shift_type: lastShift?.shift_type || null,
         shift_length_hours: lastShift?.shift_length_hours || null,
