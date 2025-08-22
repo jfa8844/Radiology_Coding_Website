@@ -10,6 +10,7 @@ const dropdownMenu = document.getElementById('dropdown-menu');
 const logoutButton = document.getElementById('logout-btn');
 const saveLayoutButton = document.getElementById('save-layout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
+const clearCountsButton = document.getElementById('clear-counts-btn');
 const endShiftButton = document.getElementById('end-shift-btn');
 const shiftTitleInput = document.getElementById('shift-title');
 const shiftTypeInput = document.getElementById('shift-type');
@@ -122,6 +123,40 @@ resetLayoutButton.addEventListener('click', async () => {
     } catch (error) {
         console.error('Error resetting layout:', error);
         alert('Failed to reset layout.');
+    }
+});
+
+// Clear all counts functionality
+clearCountsButton.addEventListener('click', async () => {
+    const activeShiftId = await getOrCreateActiveShift();
+    if (!activeShiftId) {
+        alert('No active shift found. Cannot clear counts.');
+        return;
+    }
+
+    try {
+        // Update the database
+        const { error } = await supaClient
+            .from('shift_entries')
+            .update({ count: 0 })
+            .eq('shift_id', activeShiftId);
+
+        if (error) {
+            throw error;
+        }
+
+        // Update the UI
+        const countElements = document.querySelectorAll('.case-count');
+        countElements.forEach(element => {
+            element.textContent = '0';
+        });
+
+        updateDashboard();
+        alert('All counts have been cleared.');
+
+    } catch (error) {
+        console.error('Error clearing counts:', error);
+        alert('Failed to clear all counts.');
     }
 });
 
