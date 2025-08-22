@@ -139,10 +139,10 @@ clearCountsButton.addEventListener('click', async () => {
         return;
     }
 
-    // The update call returns an error object if it fails
+    // The delete call returns an error object if it fails
     const { error } = await supaClient
         .from('shift_entries')
-        .update({ count: 0 })
+        .delete()
         .eq('shift_id', activeShiftId);
 
     // If the error object is not null, something went wrong.
