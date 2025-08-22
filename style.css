@@ -556,9 +556,19 @@ button:hover {
 .main-nav input[type="time"] {
     padding: 5px 8px;
     font-size: 0.9em;
-    min-width: 65px; /* Reduced from 130px */
-    width: 65px;
     font-family: inherit; /* Ensures consistent font */
+}
+
+.main-nav input[type="text"],
+.main-nav input[type="number"] {
+    min-width: 65px;
+    width: 65px;
+}
+
+.main-nav input[type="date"],
+.main-nav input[type="time"] {
+    min-width: 75px;
+    width: 75px;
 }
 
 /* Adjust the specifically narrow inputs */
