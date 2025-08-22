@@ -215,7 +215,15 @@ button:hover {
 }
 
 .live-metrics {
-    /* This is now just a flex container for the metric items */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.live-metrics-row {
+    display: flex;
+    gap: 16px;
 }
 
 .metric-item {
