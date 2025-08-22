@@ -142,7 +142,7 @@ button:hover {
     justify-content: initial;
     align-items: initial;
     height: auto;
-    padding-top: 80px; /* Space for the sticky header */
+    padding-top: 20px; /* Space for the sticky header */
 }
 
 /* Override main for app layout */
