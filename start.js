@@ -21,7 +21,7 @@ async function checkAuth() {
 
 // Event Listeners
 startShiftBtn.addEventListener('click', () => {
-    startShiftModal.style.display = 'block';
+    startShiftModal.classList.add('modal-visible');
     // Set default time to now
     const now = new Date();
     const timezoneOffset = now.getTimezoneOffset() * 60000;
@@ -30,7 +30,7 @@ startShiftBtn.addEventListener('click', () => {
 });
 
 cancelStartBtn.addEventListener('click', () => {
-    startShiftModal.style.display = 'none';
+    startShiftModal.classList.remove('modal-visible');
 });
 
 confirmStartBtn.addEventListener('click', async () => {
