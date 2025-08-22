@@ -209,12 +209,17 @@ async function getOrCreateActiveShift() {
 
         if (existingShift.shift_start_time) {
             const startTime = new Date(existingShift.shift_start_time);
-            const timezoneOffset = startTime.getTimezoneOffset() * 60000;
-            const localTime = new Date(startTime.getTime() - timezoneOffset);
-            const localISOString = localTime.toISOString();
 
-            shiftStartDateInput.value = localISOString.slice(0, 10); // YYYY-MM-DD
-            shiftStartTimeField.value = localISOString.slice(11, 16); // HH:mm
+            // Correctly format for the date input (YYYY-MM-DD)
+            const year = startTime.getFullYear();
+            const month = String(startTime.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const day = String(startTime.getDate()).padStart(2, '0');
+            shiftStartDateInput.value = `${year}-${month}-${day}`;
+
+            // Correctly format for the time input (HH:mm)
+            const hours = String(startTime.getHours()).padStart(2, '0');
+            const minutes = String(startTime.getMinutes()).padStart(2, '0');
+            shiftStartTimeField.value = `${hours}:${minutes}`;
         }
 
         return activeShiftId;
