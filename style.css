@@ -385,7 +385,7 @@ button:hover {
     background-color: var(--background-secondary);
     padding: 8px 32px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
     border-bottom: 1px solid var(--border-primary);
     margin-bottom: 20px;
@@ -531,4 +531,40 @@ button:hover {
     font-size: 0.8em;
     color: var(--text-tertiary); /* A light grey color from the existing theme */
     font-weight: bold;
+}
+
+/* --- New styles for Navigation Bar Inputs --- */
+
+/* Style the container for the inputs within the nav bar */
+.main-nav .shift-info-inputs {
+    display: flex;
+    gap: 15px; /* Adjust spacing between each input field */
+    align-items: center;
+    margin-right: auto; /* Pushes the controls to the far right */
+    margin-left: 20px;
+}
+
+/* Make the input groups (label + input) more compact */
+.main-nav .input-group {
+    gap: 3px; /* Reduce space between label and its input */
+}
+
+/* Make the input boxes themselves smaller to fit in the bar */
+.main-nav input[type="text"],
+.main-nav input[type="number"],
+.main-nav input[type="datetime-local"] {
+    padding: 5px 8px;
+    font-size: 0.9em;
+    min-width: 130px; /* Give a consistent base width */
+}
+
+/* Adjust the specifically narrow inputs */
+.main-nav .input-narrow {
+    min-width: 110px;
+    width: 110px;
+}
+
+/* Adjust label font size for the more compact view */
+.main-nav .shift-info-inputs label {
+    font-size: 0.75em;
 }
