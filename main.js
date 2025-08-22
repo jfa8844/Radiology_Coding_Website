@@ -128,36 +128,40 @@ resetLayoutButton.addEventListener('click', async () => {
 
 // Clear all counts functionality
 clearCountsButton.addEventListener('click', async () => {
+    const isConfirmed = confirm('Are you sure you want to clear all counts for the current shift? This cannot be undone.');
+    if (!isConfirmed) {
+        return;
+    }
+
     const activeShiftId = await getOrCreateActiveShift();
     if (!activeShiftId) {
         alert('No active shift found. Cannot clear counts.');
         return;
     }
 
-    try {
-        // Update the database
-        const { error } = await supaClient
-            .from('shift_entries')
-            .update({ count: 0 })
-            .eq('shift_id', activeShiftId);
+    // The update call returns an error object if it fails
+    const { error } = await supaClient
+        .from('shift_entries')
+        .update({ count: 0 })
+        .eq('shift_id', activeShiftId);
 
-        if (error) {
-            throw error;
-        }
-
-        // Update the UI
-        const countElements = document.querySelectorAll('.case-count');
-        countElements.forEach(element => {
-            element.textContent = '0';
-        });
-
-        updateDashboard();
-        alert('All counts have been cleared.');
-
-    } catch (error) {
+    // If the error object is not null, something went wrong.
+    if (error) {
+        alert('Error: Could not clear counts in the database. Please try again or refresh the page.');
         console.error('Error clearing counts:', error);
-        alert('Failed to clear all counts.');
+        return; // Stop the function here
     }
+
+    // Loop through all procedure cards and set their display count to 0
+    document.querySelectorAll('.procedure-card').forEach(card => {
+        const countElement = card.querySelector('.case-count');
+        if (countElement) {
+            countElement.textContent = '0';
+        }
+    });
+
+    // Finally, update the main dashboard metrics
+    updateDashboard();
 });
 
 async function getOrCreateActiveShift() {
