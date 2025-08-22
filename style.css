@@ -388,6 +388,7 @@ button:hover {
     justify-content: flex-end;
     align-items: center;
     border-bottom: 1px solid var(--border-primary);
+    margin-bottom: 20px;
 }
 .nav-controls {
     display: flex;
