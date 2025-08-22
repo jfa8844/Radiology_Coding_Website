@@ -567,8 +567,8 @@ button:hover {
 
 .main-nav input[type="date"],
 .main-nav input[type="time"] {
-    min-width: 85px;
-    width: 85px;
+    min-width: 100px;
+    width: 100px;
 }
 
 /* Adjust the specifically narrow inputs */
