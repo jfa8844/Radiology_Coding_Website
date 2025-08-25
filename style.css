@@ -330,6 +330,19 @@ button:hover {
     box-shadow: 0 0 5px var(--accent-primary-shadow); /* Subtle glow effect */
 }
 
+.column-placeholder {
+    background-color: transparent;
+    border: 2px dashed var(--border-primary);
+    border-radius: 6px;
+    min-height: 38px; /* Matches the approximate height of a procedure card */
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
 .card-header {
     text-align: left;
     margin: 0;
