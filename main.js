@@ -20,6 +20,7 @@ const logoutButton = document.getElementById('logout-btn');
 const saveLayoutButton = document.getElementById('save-layout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
 const clearCountsButton = document.getElementById('clear-counts-btn');
+const addColumnButton = document.getElementById('add-column-btn');
 const endShiftButton = document.getElementById('end-shift-btn');
 const shiftTitleInput = document.getElementById('shift-title');
 const shiftTypeInput = document.getElementById('shift-type');
@@ -74,41 +75,91 @@ endShiftButton.addEventListener('click', async () => {
     window.location.href = 'start.html';
 });
 
-// Save layout functionality
-saveLayoutButton.addEventListener('click', async () => {
+async function saveLayout(showAlert = true) {
     const { data: { user } } = await supaClient.auth.getUser();
     if (!user) {
-        alert('You must be logged in to save a layout.');
+        if (showAlert) alert('You must be logged in to save a layout.');
         return;
     }
 
     const layoutData = [];
     const columns = document.querySelectorAll('.procedure-grid .grid-column');
 
+    const columnUpdates = [];
+
     columns.forEach((column, columnIndex) => {
+        const columnId = parseInt(column.getAttribute('data-column-id'));
+        if (!isNaN(columnId)) {
+            columnUpdates.push({
+                id: columnId,
+                user_id: user.id,
+                display_order: columnIndex + 1
+            });
+        }
+
         const cards = column.querySelectorAll('.procedure-card');
         cards.forEach((card, rowIndex) => {
             const procedureId = card.getAttribute('data-procedure-id');
             layoutData.push({
                 user_id: user.id,
                 procedure_id: parseInt(procedureId),
-                display_row: rowIndex + 1, // 1-based index
-                display_column: columnIndex + 1, // 1-based index
+                display_row: rowIndex + 1,
+                display_column: columnIndex + 1
             });
         });
     });
 
-    const { error } = await supaClient
+    // Update column order
+    const { error: columnError } = await supaClient.from('user_columns').upsert(columnUpdates);
+    if (columnError) {
+        console.error('Error saving column order:', columnError);
+        if (showAlert) alert('Failed to save column order.');
+        return;
+    }
+
+    // Update procedure preferences
+    const { error: prefError } = await supaClient
         .from('user_procedure_preferences')
         .upsert(layoutData, { onConflict: 'user_id, procedure_id' });
 
-    if (error) {
-        console.error('Error saving layout:', error);
-        alert('Failed to save layout.');
+    if (prefError) {
+        console.error('Error saving layout:', prefError);
+        if (showAlert) alert('Failed to save layout.');
     } else {
-        alert('Layout saved successfully!');
+        if (showAlert) alert('Layout saved successfully!');
     }
-});
+}
+
+async function deleteColumn(columnIdToDelete) {
+    const columnElement = document.querySelector(`.grid-column[data-column-id="${columnIdToDelete}"]`);
+    if (!columnElement) return;
+
+    const firstColumn = document.querySelector('.grid-column[data-display-order="1"]');
+    if (!firstColumn) {
+        alert('Error: Could not find the first column to move items to.');
+        return;
+    }
+    const cardsToMove = Array.from(columnElement.querySelectorAll('.procedure-card'));
+
+    const { error: deleteError } = await supaClient
+        .from('user_columns')
+        .delete()
+        .eq('id', columnIdToDelete);
+
+    if (deleteError) {
+        console.error('Failed to delete column:', deleteError);
+        alert('Error: Could not delete the column. Please try again.');
+        return;
+    }
+
+    columnElement.remove();
+    cardsToMove.forEach(card => firstColumn.appendChild(card));
+
+    await saveLayout(false);
+}
+
+// Save layout functionality
+saveLayoutButton.addEventListener('click', () => saveLayout(true));
 
 // Reset layout functionality
 resetLayoutButton.addEventListener('click', async () => {
@@ -172,6 +223,61 @@ clearCountsButton.addEventListener('click', async () => {
 
     // Finally, update the main dashboard metrics
     updateDashboard();
+});
+
+// Add column functionality
+addColumnButton.addEventListener('click', async () => {
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) {
+        alert('You must be logged in to add a column.');
+        return;
+    }
+
+    const procedureGrid = document.querySelector('.procedure-grid');
+    const existingColumns = procedureGrid.querySelectorAll('.grid-column');
+    const newDisplayOrder = existingColumns.length + 1;
+
+    const { data: newColumn, error } = await supaClient
+        .from('user_columns')
+        .insert({
+            user_id: user.id,
+            title: null, // Title is not used for now
+            display_order: newDisplayOrder
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding column:', error);
+        alert('Failed to add new column.');
+        return;
+    }
+
+    const column = document.createElement('div');
+    column.className = 'grid-column';
+    column.setAttribute('data-column-id', newColumn.id);
+    column.setAttribute('data-display-order', newColumn.display_order);
+
+    const columnHeader = document.createElement('div');
+    columnHeader.className = 'column-header';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-column-btn';
+    deleteBtn.innerHTML = '&times;';
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteColumn(newColumn.id);
+    });
+    columnHeader.appendChild(deleteBtn);
+
+    column.appendChild(columnHeader);
+    procedureGrid.appendChild(column);
+
+    new Sortable(column, {
+        group: 'procedures',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+    });
 });
 
 async function getOrCreateActiveShift() {
@@ -443,12 +549,69 @@ async function loadProcedures() {
     }
 
     // Create column containers
-    const numColumns = 6;
-    for (let i = 0; i < numColumns; i++) {
+    let userColumns = [];
+    if (user) {
+        let { data, error } = await supaClient
+            .from('user_columns')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('display_order');
+
+        if (error) {
+            console.error('Error fetching user columns:', error);
+            return;
+        }
+        userColumns = data;
+    }
+
+    if (user && userColumns.length === 0) {
+        // First-time setup for a user, create 6 default columns
+        const defaultColumns = [];
+        for (let i = 1; i <= 6; i++) {
+            // Title is not needed for now, but the schema has it.
+            defaultColumns.push({ user_id: user.id, title: null, display_order: i });
+        }
+
+        const { data: newColumns, error: insertError } = await supaClient
+            .from('user_columns')
+            .insert(defaultColumns)
+            .select();
+
+        if (insertError) {
+            console.error('Error creating default columns:', insertError);
+            return;
+        }
+        userColumns = newColumns;
+    } else if (userColumns.length === 0) {
+        // Not logged in, show 6 default columns
+        for (let i = 1; i <= 6; i++) {
+            userColumns.push({ id: `default-${i}`, display_order: i, title: null });
+        }
+    }
+
+    userColumns.forEach(c => {
         const column = document.createElement('div');
         column.className = 'grid-column';
+        column.setAttribute('data-column-id', c.id);
+        column.setAttribute('data-display-order', c.display_order);
+
+        const columnHeader = document.createElement('div');
+        columnHeader.className = 'column-header';
+
+        if (c.display_order > 6) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-column-btn';
+            deleteBtn.innerHTML = '&times;'; // A simple 'x'
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteColumn(c.id);
+            });
+            columnHeader.appendChild(deleteBtn);
+        }
+
+        column.appendChild(columnHeader);
         procedureGrid.appendChild(column);
-    }
+    });
 
     const columns = procedureGrid.querySelectorAll('.grid-column');
 

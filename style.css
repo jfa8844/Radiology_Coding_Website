@@ -594,3 +594,33 @@ button:hover {
 .pace-neutral {
     border: 10px solid var(--border-primary);
 }
+
+.column-header {
+    position: relative;
+    padding: 5px;
+    border-bottom: 1px solid var(--border-primary);
+    margin-bottom: 5px;
+    height: 20px;
+    box-sizing: border-box;
+}
+
+.delete-column-btn {
+    position: absolute;
+    top: -5px;
+    right: 0px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--text-secondary);
+    padding: 5px;
+    display: none;
+}
+
+.grid-column:hover .delete-column-btn {
+    display: block;
+}
+
+.delete-column-btn:hover {
+    color: var(--error);
+}
