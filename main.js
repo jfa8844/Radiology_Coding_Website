@@ -273,10 +273,26 @@ addColumnButton.addEventListener('click', async () => {
     column.appendChild(columnHeader);
     procedureGrid.appendChild(column);
 
+    const placeholder = document.createElement('div');
+    placeholder.className = 'column-placeholder';
+    placeholder.textContent = 'Drag cards here';
+    column.appendChild(placeholder);
+
     new Sortable(column, {
         group: 'procedures',
         animation: 150,
         ghostClass: 'sortable-ghost',
+        filter: '.column-placeholder',
+        onEnd: function (evt) {
+            // Check source column. If it's empty, show placeholder.
+            if (evt.from.querySelectorAll('.procedure-card').length === 0) {
+                const fromPlaceholder = evt.from.querySelector('.column-placeholder');
+                if (fromPlaceholder) fromPlaceholder.style.display = 'flex';
+            }
+            // Check destination column. If it has cards, hide placeholder.
+            const toPlaceholder = evt.to.querySelector('.column-placeholder');
+            if (toPlaceholder) toPlaceholder.style.display = 'none';
+        }
     });
 });
 
@@ -648,10 +664,30 @@ async function loadProcedures() {
 
     // Initialize SortableJS for each column
     document.querySelectorAll('.grid-column').forEach(column => {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'column-placeholder';
+        placeholder.textContent = 'Drag cards here';
+        column.appendChild(placeholder);
+
+        if (column.querySelectorAll('.procedure-card').length > 0) {
+            placeholder.style.display = 'none';
+        }
+
         new Sortable(column, {
             group: 'procedures', // Allow dragging between columns
             animation: 150,
             ghostClass: 'sortable-ghost',
+            filter: '.column-placeholder',
+            onEnd: function (evt) {
+                // Check source column
+                if (evt.from.querySelectorAll('.procedure-card').length === 0) {
+                    const fromPlaceholder = evt.from.querySelector('.column-placeholder');
+                    if (fromPlaceholder) fromPlaceholder.style.display = 'flex';
+                }
+                // Check destination column
+                const toPlaceholder = evt.to.querySelector('.column-placeholder');
+                if (toPlaceholder) toPlaceholder.style.display = 'none';
+            }
         });
     });
 
