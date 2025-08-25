@@ -278,6 +278,8 @@ addColumnButton.addEventListener('click', async () => {
         animation: 150,
         ghostClass: 'sortable-ghost',
     });
+
+    updateColumnPlaceholders();
 });
 
 async function getOrCreateActiveShift() {
@@ -652,11 +654,16 @@ async function loadProcedures() {
             group: 'procedures', // Allow dragging between columns
             animation: 150,
             ghostClass: 'sortable-ghost',
+            onEnd: function (evt) {
+                updateColumnPlaceholders();
+                saveLayout(false); // Also save the layout after drag-and-drop
+            },
         });
     });
 
     attachEventListeners();
     updateDashboard();
+    updateColumnPlaceholders();
 }
 
 
@@ -728,6 +735,23 @@ function attachEventListeners() {
 
     shiftStartDateInput.addEventListener('blur', saveShiftStartTime);
     shiftStartTimeField.addEventListener('blur', saveShiftStartTime);
+}
+
+function updateColumnPlaceholders() {
+    document.querySelectorAll('.grid-column').forEach(column => {
+        const hasCards = column.querySelector('.procedure-card');
+        const hasPlaceholder = column.querySelector('.column-placeholder');
+
+        if (!hasCards && !hasPlaceholder) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'column-placeholder';
+            placeholder.textContent = 'Drop Procedures Here';
+            // Make sure the placeholder is added after the header
+            column.appendChild(placeholder);
+        } else if (hasCards && hasPlaceholder) {
+            hasPlaceholder.remove();
+        }
+    });
 }
 
 async function initializeApp() {
