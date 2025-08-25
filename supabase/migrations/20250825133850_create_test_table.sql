@@ -1,0 +1,6 @@
+CREATE TABLE test (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    name TEXT,
+    value TEXT
+);
