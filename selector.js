@@ -142,10 +142,19 @@ async function handleToggle(procedureId, isVisible) {
         }
     }
 
+    // Create a clean array for the upsert, sending only the required fields.
+    const preferencesToUpsert = currentPreferences.map(p => ({
+        user_id: p.user_id,
+        procedure_id: p.procedure_id,
+        is_visible: p.is_visible,
+        display_column: p.display_column,
+        display_row: p.display_row,
+    }));
+
     // Upsert the final, merged state, ensuring what the user sees is what gets saved.
     const { error: upsertError } = await supaClient
         .from('user_procedure_preferences')
-        .upsert(currentPreferences, { onConflict: 'user_id, procedure_id' });
+        .upsert(preferencesToUpsert, { onConflict: 'user_id, procedure_id' });
 
     if (upsertError) {
         console.error('Error upserting full preference set:', upsertError);
