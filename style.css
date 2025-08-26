@@ -664,30 +664,30 @@ button:hover {
    Selector Page Styles
    ================================= */
 
-.procedure-list-container {
+.procedure-table {
+    width: 100%;
+    border-collapse: collapse;
     max-width: 800px;
     margin: 20px auto;
-    padding: 20px;
     background-color: var(--background-secondary);
     border-radius: 8px;
+    overflow: hidden; /* Clips the corners of the rows */
 }
 
-.procedure-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 10px;
+.procedure-table th {
+    font-weight: bold;
+}
+
+.procedure-table th, .procedure-table td {
+    padding: 4px 8px;
+    text-align: left;
     border-bottom: 1px solid var(--border-primary);
 }
 
-.procedure-item:last-child {
+.procedure-item:last-child td {
     border-bottom: none;
 }
 
-.procedure-name {
-    font-size: 1.1em;
-    color: var(--text-primary);
-}
 
 /* The switch - the box around the slider */
 .switch {

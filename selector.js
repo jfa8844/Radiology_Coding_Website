@@ -44,18 +44,24 @@ async function loadProceduresAndPreferences() {
         const userPreference = preferencesMap.get(procedure.id);
         const isVisible = userPreference ? userPreference.is_visible : procedure.default_display;
 
-        const procedureItem = document.createElement('div');
-        procedureItem.classList.add('procedure-item');
+        const procedureRow = document.createElement('tr');
+        procedureRow.classList.add('procedure-item');
 
-        procedureItem.innerHTML = `
-            <span class="procedure-name">${procedure.description}</span>
-            <label class="switch">
-                <input type="checkbox" ${isVisible ? 'checked' : ''} data-procedure-id="${procedure.id}">
-                <span class="slider round"></span>
-            </label>
+        procedureRow.innerHTML = `
+            <td>${procedure.cpt_code}</td>
+            <td>${procedure.abbreviation}</td>
+            <td>${procedure.description}</td>
+            <td>${procedure.modality}</td>
+            <td>${procedure.wrVU}</td>
+            <td>
+                <label class="switch">
+                    <input type="checkbox" ${isVisible ? 'checked' : ''} data-procedure-id="${procedure.id}">
+                    <span class="slider round"></span>
+                </label>
+            </td>
         `;
 
-        procedureListContainer.appendChild(procedureItem);
+        procedureListContainer.appendChild(procedureRow);
     });
 }
 
