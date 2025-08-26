@@ -110,11 +110,17 @@ async function saveLayout(showAlert = true) {
     });
 
     // Update column order
-    const { error: columnError } = await supaClient.from('user_columns').upsert(columnUpdates);
-    if (columnError) {
-        console.error('Error saving column order:', columnError);
-        if (showAlert) alert('Failed to save column order.');
-        return;
+    for (const column of columnUpdates) {
+        const { error } = await supaClient
+            .from('user_columns')
+            .update({ display_order: column.display_order })
+            .eq('id', column.id);
+
+        if (error) {
+            console.error('Error updating column order:', error);
+            if (showAlert) alert('Failed to save column order.');
+            return;
+        }
     }
 
     // Update procedure preferences
