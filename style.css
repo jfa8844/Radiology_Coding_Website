@@ -309,6 +309,7 @@ button:hover {
     flex-direction: column;
     gap: 10px; /* Spacing between cards in a column */
     min-height: 50px; /* Ensure even empty columns are droppable */
+    min-width: 250px; /* Add this line */
 }
 
 /* Procedure Card */
