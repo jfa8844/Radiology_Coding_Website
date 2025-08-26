@@ -506,7 +506,7 @@ async function loadProcedures() {
     if (user) {
         const { data: preferences, error: prefError } = await supaClient
             .from('user_procedure_preferences')
-            .select('procedure_id, display_row, display_column')
+            .select('procedure_id, display_row, display_column, is_visible')
             .eq('user_id', user.id);
 
         if (prefError) {
@@ -514,11 +514,16 @@ async function loadProcedures() {
         }
 
         if (preferences && preferences.length > 0) {
+            // A custom layout exists if any preference has a display position.
             const hasCustomLayout = preferences.some(p => p.display_row !== null || p.display_column !== null);
 
             if (hasCustomLayout) {
                 loadDefault = false;
-                const procedureIds = preferences.map(p => p.procedure_id);
+                // Filter this custom layout for only the visible procedures.
+                const visiblePreferences = preferences.filter(p => p.is_visible);
+
+                const procedureIds = visiblePreferences.map(p => p.procedure_id);
+                // If no procedures are visible, this will fetch an empty array, which is correct.
                 const { data, error } = await supaClient
                     .from('procedures')
                     .select('id, abbreviation, description, wrvu, modality')
