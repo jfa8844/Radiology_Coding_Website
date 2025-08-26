@@ -73,6 +73,14 @@ async function handleToggle(procedureId, isVisible) {
     const { data: { user } } = await supaClient.auth.getUser();
     if (!user) return;
 
+    // Read the full UI state of all toggles to use as the source of truth for visibility.
+    const allCheckboxes = document.querySelectorAll('.procedure-list-container input[type="checkbox"]');
+    const uiVisibilityState = new Map();
+    allCheckboxes.forEach(checkbox => {
+        uiVisibilityState.set(parseInt(checkbox.dataset.procedureId), checkbox.checked);
+    });
+
+    // Fetch existing preferences for layout data, or create a snapshot if none exist.
     let { data: currentPreferences, error: prefError } = await supaClient
         .from('user_procedure_preferences')
         .select('*')
@@ -83,8 +91,6 @@ async function handleToggle(procedureId, isVisible) {
         return;
     }
 
-    // If the user has no preferences, this is their first customization.
-    // We need to create a "snapshot" of the default layout for them.
     if (currentPreferences.length === 0) {
         let { data: allProcedures, error: procError } = await supaClient
             .from('procedures')
@@ -94,8 +100,6 @@ async function handleToggle(procedureId, isVisible) {
             console.error('Error fetching all procedures for snapshot', procError);
             return;
         }
-
-        // Create a preference object for every procedure based on its default state.
         currentPreferences = allProcedures.map(p => ({
             user_id: user.id,
             procedure_id: p.id,
@@ -105,35 +109,28 @@ async function handleToggle(procedureId, isVisible) {
         }));
     }
 
-    // Now, `currentPreferences` holds the full layout state (either from a previous save or a new snapshot).
-    // Find the specific procedure the user just toggled.
+    // Merge the UI visibility state into our preference data.
+    currentPreferences.forEach(pref => {
+        const uiState = uiVisibilityState.get(pref.procedure_id);
+        if (uiState !== undefined) {
+            pref.is_visible = uiState;
+        }
+    });
+
+    // If the toggled procedure was made visible and needs a position, calculate it.
     const preferenceToUpdate = currentPreferences.find(p => p.procedure_id === procedureId);
-
-    if (!preferenceToUpdate) {
-        console.error("Logic error: Could not find the toggled procedure in the preferences list.");
-        return;
-    }
-
-    // Update the visibility of the toggled procedure.
-    preferenceToUpdate.is_visible = isVisible;
-
-    // If a procedure is being made visible and it doesn't have a display position, assign it one.
-    if (isVisible && (preferenceToUpdate.display_column === null || preferenceToUpdate.display_row === null)) {
-        const existingColumns = new Set(currentPreferences.filter(p => p.is_visible).map(p => p.display_column).filter(c => c !== null));
+    if (preferenceToUpdate && preferenceToUpdate.is_visible && (preferenceToUpdate.display_column === null || preferenceToUpdate.display_row === null)) {
+        const existingColumns = new Set(currentPreferences.filter(p => p.is_visible && p.display_column !== null).map(p => p.display_column));
         const maxColumn = existingColumns.size > 0 ? Math.max(...existingColumns) : 0;
         const nextColumn = maxColumn + 1;
 
         preferenceToUpdate.display_column = nextColumn;
-        preferenceToUpdate.display_row = 1; // It's the first item in a new column.
+        preferenceToUpdate.display_row = 1;
 
-        // Ensure the new column exists in the user_columns table.
         let { data: userColumns, error: columnsError } = await supaClient
             .from('user_columns').select('display_order').eq('user_id', user.id);
 
-        if (columnsError) {
-            console.error('Error fetching user columns:', columnsError);
-            return;
-        }
+        if (columnsError) { console.error('Error fetching user columns:', columnsError); return; }
 
         const columnExists = userColumns.some(c => c.display_order === nextColumn);
         if (!columnExists) {
@@ -141,14 +138,11 @@ async function handleToggle(procedureId, isVisible) {
                 .from('user_columns')
                 .insert({ user_id: user.id, display_order: nextColumn });
 
-            if (newColumnError) {
-                console.error('Error creating new column:', newColumnError);
-                return;
-            }
+            if (newColumnError) { console.error('Error creating new column:', newColumnError); return; }
         }
     }
 
-    // Finally, upsert the ENTIRE set of preferences. This preserves the layout.
+    // Upsert the final, merged state, ensuring what the user sees is what gets saved.
     const { error: upsertError } = await supaClient
         .from('user_procedure_preferences')
         .upsert(currentPreferences, { onConflict: 'user_id, procedure_id' });
