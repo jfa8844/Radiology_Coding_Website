@@ -85,18 +85,7 @@ async function saveLayout(showAlert = true) {
     const layoutData = [];
     const columns = document.querySelectorAll('.procedure-grid .grid-column');
 
-    const columnUpdates = [];
-
     columns.forEach((column, columnIndex) => {
-        const columnId = parseInt(column.getAttribute('data-column-id'));
-        if (!isNaN(columnId)) {
-            columnUpdates.push({
-                id: columnId,
-                user_id: user.id,
-                display_order: columnIndex + 1
-            });
-        }
-
         const cards = column.querySelectorAll('.procedure-card');
         cards.forEach((card, rowIndex) => {
             const procedureId = card.getAttribute('data-procedure-id');
@@ -104,37 +93,59 @@ async function saveLayout(showAlert = true) {
                 user_id: user.id,
                 procedure_id: parseInt(procedureId),
                 display_row: rowIndex + 1,
-                display_column: columnIndex + 1
+                display_column: columnIndex + 1,
+                is_visible: true
             });
         });
     });
 
-    // Update column order one by one to avoid unique constraint violations
-    for (const update of columnUpdates) {
-        const { error: columnError } = await supaClient
-            .from('user_columns')
-            .update({ display_order: update.display_order })
-            .eq('id', update.id)
-            .eq('user_id', user.id);
+    // First, delete all existing preferences for the user.
+    const { error: deleteError } = await supaClient
+        .from('user_procedure_preferences')
+        .delete()
+        .eq('user_id', user.id);
 
-        if (columnError) {
-            console.error(`Error updating column order for column ${update.id}:`, columnError);
-            if (showAlert) alert('Failed to save column order.');
-            // It's often better to stop on the first error
+    if (deleteError) {
+        console.error('Error clearing previous layout:', deleteError);
+        if (showAlert) alert('Failed to save layout: Could not clear previous preferences.');
+        return;
+    }
+
+    // Then, insert the new layout data.
+    if (layoutData.length > 0) {
+        const { error: insertError } = await supaClient
+            .from('user_procedure_preferences')
+            .insert(layoutData);
+
+        if (insertError) {
+            console.error('Error inserting new layout:', insertError);
+            if (showAlert) alert('Failed to save layout: Could not insert new preferences.');
             return;
         }
     }
 
-    // Update procedure preferences
-    const { error: prefError } = await supaClient
-        .from('user_procedure_preferences')
-        .upsert(layoutData, { onConflict: 'user_id, procedure_id' });
+    // Update column order
+    const columnUpdates = [];
+    document.querySelectorAll('.procedure-grid .grid-column').forEach((column, index) => {
+        const columnId = column.getAttribute('data-column-id');
+        if (columnId && !isNaN(parseInt(columnId))) {
+            columnUpdates.push({
+                id: parseInt(columnId),
+                display_order: index + 1
+            });
+        }
+    });
 
-    if (prefError) {
-        console.error('Error saving layout:', prefError);
-        if (showAlert) alert('Failed to save layout.');
-    } else {
-        if (showAlert) alert('Layout saved successfully!');
+    for (const update of columnUpdates) {
+        await supaClient
+            .from('user_columns')
+            .update({ display_order: update.display_order })
+            .match({ id: update.id, user_id: user.id });
+    }
+
+
+    if (showAlert) {
+        alert('Layout saved successfully!');
     }
 }
 
