@@ -109,12 +109,20 @@ async function saveLayout(showAlert = true) {
         });
     });
 
-    // Update column order
-    const { error: columnError } = await supaClient.from('user_columns').upsert(columnUpdates);
-    if (columnError) {
-        console.error('Error saving column order:', columnError);
-        if (showAlert) alert('Failed to save column order.');
-        return;
+    // Update column order one by one to avoid unique constraint violations
+    for (const update of columnUpdates) {
+        const { error: columnError } = await supaClient
+            .from('user_columns')
+            .update({ display_order: update.display_order })
+            .eq('id', update.id)
+            .eq('user_id', user.id);
+
+        if (columnError) {
+            console.error(`Error updating column order for column ${update.id}:`, columnError);
+            if (showAlert) alert('Failed to save column order.');
+            // It's often better to stop on the first error
+            return;
+        }
     }
 
     // Update procedure preferences
