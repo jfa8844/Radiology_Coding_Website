@@ -131,3 +131,24 @@ async function handleToggle(procedureId, isVisible) {
         console.error('Error upserting procedure preference:', upsertError);
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchBar = document.getElementById('search-bar');
+    if (searchBar) {
+        searchBar.addEventListener('input', filterProcedures);
+    }
+});
+
+function filterProcedures() {
+    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+    const procedureRows = document.querySelectorAll('.procedure-list-container tr');
+
+    procedureRows.forEach(row => {
+        const rowText = row.textContent.toLowerCase();
+        if (rowText.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
