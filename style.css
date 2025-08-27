@@ -755,7 +755,7 @@ input:checked + .slider:before {
 .search-container {
     display: flex;
     justify-content: center;
-    margin: 0 auto 20px auto;
+    margin: 20px auto;
     max-width: 800px;
 }
 
