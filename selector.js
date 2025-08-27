@@ -140,15 +140,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function filterProcedures() {
-    const searchTerm = document.getElementById('search-bar').value.toLowerCase();
+    // 1. Get the search term, trim whitespace, and split it into individual words (tokens).
+    // The regular expression /\s+/ splits on one or more spaces, preventing empty array elements.
+    const searchInput = document.getElementById('search-bar').value.toLowerCase().trim();
+    const searchTokens = searchInput.split(/\s+/).filter(Boolean); // .filter(Boolean) removes any empty strings
+
     const procedureRows = document.querySelectorAll('.procedure-list-container tr');
 
     procedureRows.forEach(row => {
+        // 2. For each row, get its combined text content in lowercase.
         const rowText = row.textContent.toLowerCase();
-        if (rowText.includes(searchTerm)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        
+        // 3. Check if EVERY search token is present in the row's text.
+        // The Array.every() method is perfect for this "AND" logic. It returns true
+        // only if the callback function returns true for every item in the array.
+        const isMatch = searchTokens.every(token => rowText.includes(token));
+        
+        // 4. Show or hide the row based on the result.
+        row.style.display = isMatch ? '' : 'none';
     });
 }
