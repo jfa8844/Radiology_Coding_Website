@@ -641,6 +641,38 @@ async function loadProcedures() {
     updateDashboard();
 }
 
+function handleShiftTitleChange() {
+    const inputValue = shiftTitleInput.value.trim();
+    if (!inputValue) {
+        selectedShiftTemplateId = null;
+        updateShiftData({ shift_template_id: null, shift_title: null });
+        return;
+    }
+
+    const matchingTemplate = shiftTemplates.find(t => t.title.toLowerCase() === inputValue.toLowerCase());
+
+    if (matchingTemplate) {
+        // A template was found and selected
+        selectedShiftTemplateId = matchingTemplate.id;
+        shiftTitleInput.value = matchingTemplate.title; // Correct casing
+
+        // Auto-fill other fields
+        if (matchingTemplate.default_shift_type) shiftTypeInput.value = matchingTemplate.default_shift_type;
+        if (matchingTemplate.default_length_hours) shiftLengthHrsInput.value = matchingTemplate.default_length_hours;
+        if (matchingTemplate.default_goal_wrvu_per_hour) goalWrvuPerHourInput.value = matchingTemplate.default_goal_wrvu_per_hour;
+
+        // Update the active shift with the selected template ID and title
+        updateShiftData({
+            shift_template_id: matchingTemplate.id,
+            shift_title: matchingTemplate.title // Also save the title for compatibility
+        });
+    } else {
+        // No match found, open the modal to confirm creation
+        document.getElementById('new-template-name').textContent = inputValue;
+        document.getElementById('new-shift-template-modal').classList.add('show');
+    }
+}
+
 function attachEventListeners() {
     document.querySelectorAll('.increment-btn').forEach(button => {
         button.addEventListener('click', () => {
@@ -691,87 +723,45 @@ function attachEventListeners() {
     shiftStartTimeField.addEventListener('change', updateDashboard);
     shiftStartDateInput.addEventListener('blur', saveShiftStartTime);
     shiftStartTimeField.addEventListener('blur', saveShiftStartTime);
+
+    // New Listeners for Shift Template Functionality
+    shiftTitleInput.addEventListener('blur', handleShiftTitleChange);
+
+    document.getElementById('modal-close-btn').addEventListener('click', () => {
+        document.getElementById('new-shift-template-modal').classList.remove('show');
+        shiftTitleInput.value = ''; // Clear the invalid input
+    });
+
+    document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+        document.getElementById('new-shift-template-modal').classList.remove('show');
+        shiftTitleInput.value = ''; // Clear the invalid input
+    });
+
+    document.getElementById('modal-create-btn').addEventListener('click', async () => {
+        const { data: { user } } = await supaClient.auth.getUser();
+        const newTitle = document.getElementById('new-template-name').textContent;
+
+        if (!user || !newTitle) return;
+
+        const { data: newTemplate, error } = await supaClient
+            .from('shift_templates')
+            .insert({ user_id: user.id, title: newTitle })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating new shift template:', error);
+            alert('Could not create new shift location.');
+            return;
+        }
+
+        document.getElementById('new-shift-template-modal').classList.remove('show');
+        shiftTitleInput.value = newTemplate.title;
+
+        await loadAndPopulateShiftTemplates();
+        handleShiftTitleChange(); // Trigger blur handler to select and save the new template
+    });
 }
-
-function handleShiftTitleChange() {
-    const inputValue = shiftTitleInput.value.trim();
-    if (!inputValue) {
-        selectedShiftTemplateId = null;
-        updateShiftData({ shift_template_id: null, shift_title: null });
-        return;
-    }
-
-    const matchingTemplate = shiftTemplates.find(t => t.title.toLowerCase() === inputValue.toLowerCase());
-
-    if (matchingTemplate) {
-        // A template was found and selected
-        selectedShiftTemplateId = matchingTemplate.id;
-        shiftTitleInput.value = matchingTemplate.title; // Correct casing
-
-        // Auto-fill other fields
-        if (matchingTemplate.default_shift_type) shiftTypeInput.value = matchingTemplate.default_shift_type;
-        if (matchingTemplate.default_length_hours) shiftLengthHrsInput.value = matchingTemplate.default_length_hours;
-        if (matchingTemplate.default_goal_wrvu_per_hour) goalWrvuPerHourInput.value = matchingTemplate.default_goal_wrvu_per_hour;
-
-        // Update the active shift with the selected template ID and title
-        updateShiftData({
-            shift_template_id: matchingTemplate.id,
-            shift_title: matchingTemplate.title // Also save the title for compatibility
-        });
-    } else {
-        // No match found, open the modal to confirm creation
-        document.getElementById('new-template-name').textContent = inputValue;
-        document.getElementById('new-shift-template-modal').classList.add('show');
-    }
-}
-
-// --- Event Listeners for the new functionality ---
-
-// Listen for when the user clicks away from the shift title input
-shiftTitleInput.addEventListener('blur', handleShiftTitleChange);
-
-// Modal close button
-document.getElementById('modal-close-btn').addEventListener('click', () => {
-    document.getElementById('new-shift-template-modal').classList.remove('show');
-    shiftTitleInput.value = ''; // Clear the invalid input
-});
-
-// Modal cancel button
-document.getElementById('modal-cancel-btn').addEventListener('click', () => {
-    document.getElementById('new-shift-template-modal').classList.remove('show');
-    shiftTitleInput.value = ''; // Clear the invalid input
-});
-
-// Modal create button
-document.getElementById('modal-create-btn').addEventListener('click', async () => {
-    const { data: { user } } = await supaClient.auth.getUser();
-    const newTitle = document.getElementById('new-template-name').textContent;
-
-    if (!user || !newTitle) return;
-
-    // Insert the new template into the database
-    const { data: newTemplate, error } = await supaClient
-        .from('shift_templates')
-        .insert({ user_id: user.id, title: newTitle })
-        .select()
-        .single();
-
-    if (error) {
-        console.error('Error creating new shift template:', error);
-        alert('Could not create new shift location.');
-        return;
-    }
-
-    // Close the modal and update the UI
-    document.getElementById('new-shift-template-modal').classList.remove('show');
-    shiftTitleInput.value = newTemplate.title;
-
-    // Refresh the local list of templates and re-populate the datalist
-    await loadAndPopulateShiftTemplates();
-
-    // Trigger the 'blur' handler again to select and save the newly created template
-    handleShiftTitleChange();
-});
 
 async function initializeApp() {
     sessionStorage.removeItem('targetColumnDisplayOrder');
