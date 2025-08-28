@@ -52,7 +52,7 @@ async function loadProceduresAndPreferences() {
             <td>${procedure.abbreviation}</td>
             <td>${procedure.description}</td>
             <td>${procedure.modality}</td>
-            <td>${procedure.wrVU}</td>
+            <td>${procedure.wrvu}</td>
             <td>
                 <label class="switch">
                     <input type="checkbox" ${isVisible ? 'checked' : ''} data-procedure-id="${procedure.id}">
