@@ -658,6 +658,7 @@ function attachEventListeners() {
 }
 
 async function initializeApp() {
+    sessionStorage.removeItem('targetColumnDisplayOrder');
     const { data: { user } } = await supaClient.auth.getUser();
     if (!user) {
         window.location.href = 'index.html';
