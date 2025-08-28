@@ -1,5 +1,7 @@
 // supabase initialization
 let activeShiftId = null;
+let shiftTemplates = []; // To store all loaded templates
+let selectedShiftTemplateId = null; // To store the ID of the chosen template
 
 function getCombinedStartTime() {
     const date = shiftStartDateInput.value;
@@ -12,6 +14,30 @@ function getCombinedStartTime() {
 const SUPABASE_URL = 'https://byvclyemwwoxhhzsfwrh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dmNseWVtd3dveGhoenNmd3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NjYwNzYsImV4cCI6MjA3MTA0MjA3Nn0.6Wy4Xm02bskAZPXMJMudWgtoUqlZNIp0UDAQibr3jwM';
 const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function loadAndPopulateShiftTemplates() {
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supaClient
+        .from('shift_templates')
+        .select('*')
+        .eq('user_id', user.id);
+
+    if (error) {
+        console.error('Error fetching shift templates:', error);
+        return;
+    }
+    shiftTemplates = data || [];
+
+    const dataList = document.getElementById('shift-titles-list');
+    dataList.innerHTML = ''; // Clear existing options
+    shiftTemplates.forEach(template => {
+        const option = document.createElement('option');
+        option.value = template.title;
+        dataList.appendChild(option);
+    });
+}
 
 async function setupNewUser(userId) {
     console.log("Setting up new user with default data...");
@@ -363,7 +389,18 @@ async function getOrCreateActiveShift() {
 
     if (existingShift) {
         activeShiftId = existingShift.id;
-        shiftTitleInput.value = existingShift.shift_title || '';
+        selectedShiftTemplateId = existingShift.shift_template_id; // Store the template ID
+
+        // Find the template that matches the ID and set the title
+        const currentTemplate = shiftTemplates.find(t => t.id === selectedShiftTemplateId);
+        if (currentTemplate) {
+            shiftTitleInput.value = currentTemplate.title;
+        } else {
+            // Fallback for older shifts that might not have a template ID
+            shiftTitleInput.value = existingShift.shift_title || '';
+        }
+
+        // The rest of the input population can remain the same
         shiftTypeInput.value = existingShift.shift_type || '';
         shiftLengthHrsInput.value = existingShift.shift_length_hours || '';
         goalWrvuPerHourInput.value = existingShift.goal_wrvu_per_hour || '';
@@ -639,7 +676,6 @@ function attachEventListeners() {
         });
     });
 
-    shiftTitleInput.addEventListener('blur', () => updateShiftData({ shift_title: shiftTitleInput.value }));
     shiftTypeInput.addEventListener('blur', () => updateShiftData({ shift_type: shiftTypeInput.value }));
     shiftLengthHrsInput.addEventListener('blur', () => updateShiftData({ shift_length_hours: shiftLengthHrsInput.value }));
     goalWrvuPerHourInput.addEventListener('blur', () => updateShiftData({ goal_wrvu_per_hour: goalWrvuPerHourInput.value }));
@@ -656,6 +692,86 @@ function attachEventListeners() {
     shiftStartDateInput.addEventListener('blur', saveShiftStartTime);
     shiftStartTimeField.addEventListener('blur', saveShiftStartTime);
 }
+
+function handleShiftTitleChange() {
+    const inputValue = shiftTitleInput.value.trim();
+    if (!inputValue) {
+        selectedShiftTemplateId = null;
+        updateShiftData({ shift_template_id: null, shift_title: null });
+        return;
+    }
+
+    const matchingTemplate = shiftTemplates.find(t => t.title.toLowerCase() === inputValue.toLowerCase());
+
+    if (matchingTemplate) {
+        // A template was found and selected
+        selectedShiftTemplateId = matchingTemplate.id;
+        shiftTitleInput.value = matchingTemplate.title; // Correct casing
+
+        // Auto-fill other fields
+        if (matchingTemplate.default_shift_type) shiftTypeInput.value = matchingTemplate.default_shift_type;
+        if (matchingTemplate.default_length_hours) shiftLengthHrsInput.value = matchingTemplate.default_length_hours;
+        if (matchingTemplate.default_goal_wrvu_per_hour) goalWrvuPerHourInput.value = matchingTemplate.default_goal_wrvu_per_hour;
+
+        // Update the active shift with the selected template ID and title
+        updateShiftData({
+            shift_template_id: matchingTemplate.id,
+            shift_title: matchingTemplate.title // Also save the title for compatibility
+        });
+    } else {
+        // No match found, open the modal to confirm creation
+        document.getElementById('new-template-name').textContent = inputValue;
+        document.getElementById('new-shift-template-modal').classList.add('show');
+    }
+}
+
+// --- Event Listeners for the new functionality ---
+
+// Listen for when the user clicks away from the shift title input
+shiftTitleInput.addEventListener('blur', handleShiftTitleChange);
+
+// Modal close button
+document.getElementById('modal-close-btn').addEventListener('click', () => {
+    document.getElementById('new-shift-template-modal').classList.remove('show');
+    shiftTitleInput.value = ''; // Clear the invalid input
+});
+
+// Modal cancel button
+document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+    document.getElementById('new-shift-template-modal').classList.remove('show');
+    shiftTitleInput.value = ''; // Clear the invalid input
+});
+
+// Modal create button
+document.getElementById('modal-create-btn').addEventListener('click', async () => {
+    const { data: { user } } = await supaClient.auth.getUser();
+    const newTitle = document.getElementById('new-template-name').textContent;
+
+    if (!user || !newTitle) return;
+
+    // Insert the new template into the database
+    const { data: newTemplate, error } = await supaClient
+        .from('shift_templates')
+        .insert({ user_id: user.id, title: newTitle })
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error creating new shift template:', error);
+        alert('Could not create new shift location.');
+        return;
+    }
+
+    // Close the modal and update the UI
+    document.getElementById('new-shift-template-modal').classList.remove('show');
+    shiftTitleInput.value = newTemplate.title;
+
+    // Refresh the local list of templates and re-populate the datalist
+    await loadAndPopulateShiftTemplates();
+
+    // Trigger the 'blur' handler again to select and save the newly created template
+    handleShiftTitleChange();
+});
 
 async function initializeApp() {
     sessionStorage.removeItem('targetColumnDisplayOrder');
@@ -682,6 +798,7 @@ async function initializeApp() {
     }
     
     // Now that we know the user is set up, proceed with normal app loading
+    await loadAndPopulateShiftTemplates(); // <-- ADD THIS LINE
     await getOrCreateActiveShift();
     await loadProcedures();
 }
