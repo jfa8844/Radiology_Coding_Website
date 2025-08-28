@@ -79,56 +79,92 @@ async function handleToggle(procedureId, isVisible) {
     const { data: { user } } = await supaClient.auth.getUser();
     if (!user) return;
 
-    // First, get the current preference for this specific procedure
-    let { data: preference, error: fetchError } = await supaClient
-        .from('user_procedure_preferences')
-        .select('display_column, display_row')
-        .eq('user_id', user.id)
-        .eq('procedure_id', procedureId)
-        .single();
+    if (isVisible) {
+        let targetColumnDisplayOrder;
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = single row not found
-        console.error('Error fetching procedure preference:', fetchError);
-        return;
-    }
+        // Check session storage for a display order from this session
+        const storedOrder = sessionStorage.getItem('targetColumnDisplayOrder');
 
-    const upsertData = {
-        user_id: user.id,
-        procedure_id: procedureId,
-        is_visible: isVisible,
-        display_column: preference ? preference.display_column : null,
-        display_row: preference ? preference.display_row : null,
-    };
+        if (storedOrder) {
+            targetColumnDisplayOrder = parseInt(storedOrder, 10);
+        } else {
+            // If no order in session, find the max display order from the DB
+            const { data: maxOrder, error: maxOrderError } = await supaClient
+                .from('user_columns')
+                .select('display_order')
+                .eq('user_id', user.id)
+                .order('display_order', { ascending: false })
+                .limit(1)
+                .single();
 
-    // If making visible and it has no position, assign one.
-    if (isVisible && (upsertData.display_column === null || upsertData.display_row === null)) {
-        // Find the last row in the first column to append the new procedure
-        const { data: lastCardInCol1, error: lastCardError } = await supaClient
+            if (maxOrderError && maxOrderError.code !== 'PGRST116') {
+                console.error('Error fetching max column order:', maxOrderError);
+                return; // Stop if we can't determine the next column
+            }
+
+            targetColumnDisplayOrder = (maxOrder ? maxOrder.display_order : 0) + 1;
+
+            // Create the new column in the user_columns table
+            const { error: insertError } = await supaClient
+                .from('user_columns')
+                .insert({ user_id: user.id, display_order: targetColumnDisplayOrder });
+
+            if (insertError) {
+                console.error('Error creating new column:', insertError);
+                return; // Stop if the column can't be created
+            }
+
+            // Store the new display order in session storage for next time
+            sessionStorage.setItem('targetColumnDisplayOrder', targetColumnDisplayOrder);
+        }
+
+        // Find the next available row in the target column
+        const { data: lastCard, error: lastCardError } = await supaClient
             .from('user_procedure_preferences')
             .select('display_row')
             .eq('user_id', user.id)
-            .eq('display_column', 1)
+            .eq('display_column', targetColumnDisplayOrder)
             .order('display_row', { ascending: false })
             .limit(1)
             .single();
 
         if (lastCardError && lastCardError.code !== 'PGRST116') {
-            console.error('Error finding last card in column 1:', lastCardError);
-            // Fallback to a default position
-            upsertData.display_column = 1;
-            upsertData.display_row = 999;
-        } else {
-            upsertData.display_column = 1;
-            upsertData.display_row = lastCardInCol1 ? lastCardInCol1.display_row + 1 : 1;
+            console.error('Error finding last card in column:', lastCardError);
+            // Don't return, we can still try to place it at row 1
         }
-    }
 
-    const { error: upsertError } = await supaClient
-        .from('user_procedure_preferences')
-        .upsert(upsertData, { onConflict: 'user_id, procedure_id' });
+        const nextRow = lastCard ? lastCard.display_row + 1 : 1;
 
-    if (upsertError) {
-        console.error('Error upserting procedure preference:', upsertError);
+        // Upsert the procedure preference with the new position
+        const { error: upsertError } = await supaClient
+            .from('user_procedure_preferences')
+            .upsert({
+                user_id: user.id,
+                procedure_id: procedureId,
+                is_visible: true,
+                display_column: targetColumnDisplayOrder,
+                display_row: nextRow
+            }, { onConflict: 'user_id, procedure_id' });
+
+        if (upsertError) {
+            console.error('Error upserting procedure preference:', upsertError);
+        }
+
+    } else {
+        // If toggling off, just set is_visible to false and null out the position
+        const { error: upsertError } = await supaClient
+            .from('user_procedure_preferences')
+            .upsert({
+                user_id: user.id,
+                procedure_id: procedureId,
+                is_visible: false,
+                display_column: null,
+                display_row: null
+            }, { onConflict: 'user_id, procedure_id' });
+
+        if (upsertError) {
+            console.error('Error hiding procedure:', upsertError);
+        }
     }
 }
 
