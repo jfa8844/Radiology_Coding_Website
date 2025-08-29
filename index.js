@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const supabase = require('./lib/supabaseClient');
 const app = express();
 const port = 3000;
 
@@ -9,17 +8,20 @@ const port = 3000;
 // This will make index.html, signup.html, and style.css available.
 app.use(express.static(path.join(__dirname)));
 
+// NEW: Add an endpoint to provide the Supabase config to the client
+app.get('/config', (req, res) => {
+  res.json({
+    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY
+  });
+});
+
+
 app.get('/test', async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('test').select('*');
-    if (error) {
-      throw error;
-    }
-    res.json(data);
-  } catch (error) {
-    console.error('Error fetching from test table:', error);
-    res.status(500).json({ error: 'An error occurred while fetching data.' });
-  }
+  // This route will now fail because we removed the supabase client.
+  // If you need server-side supabase access, you would re-import it
+  // from a file that ALSO uses the environment variables.
+  res.send("Test route is disabled for now.");
 });
 
 app.listen(port, () => {

@@ -1,5 +1,7 @@
-// supabase initialization
+// main.js (Corrected)
+
 let activeShiftId = null;
+let supaClient; // declare supaclient at the top level
 
 function getCombinedStartTime() {
     const date = shiftStartDateInput.value;
@@ -9,9 +11,7 @@ function getCombinedStartTime() {
     }
     return null;
 }
-const SUPABASE_URL = 'https://byvclyemwwoxhhzsfwrh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dmNseWVtd3dveGhoenNmd3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NjYwNzYsImV4cCI6MjA3MTA0MjA3Nn0.6Wy4Xm02bskAZPXMJMudWgtoUqlZNIp0UDAQibr3jwM';
-const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 
 async function setupNewUser(userId) {
     console.log("Setting up new user with default data...");
@@ -113,7 +113,6 @@ endShiftButton.addEventListener('click', async () => {
     window.location.href = 'start.html';
 });
 
-// In main.js, replace your entire saveLayout function with this one.
 
 async function saveLayout(showAlert = true) {
     const { data: { user } } = await supaClient.auth.getUser();
@@ -122,7 +121,6 @@ async function saveLayout(showAlert = true) {
         return;
     }
 
-    // 1. Build the new layout data from what's currently on the screen.
     const layoutData = [];
     const columns = document.querySelectorAll('.procedure-grid .grid-column');
     columns.forEach((column, columnIndex) => {
@@ -134,14 +132,12 @@ async function saveLayout(showAlert = true) {
                 procedure_id: parseInt(procedureId),
                 display_row: rowIndex + 1,
                 display_column: columnIndex + 1,
-                is_visible: true // Ensure the card remains visible
+                is_visible: true
             });
         });
     });
 
     try {
-        // 2. "Clear the board": Detach all procedures from their current positions.
-        // This prevents the unique constraint error.
         const { error: clearError } = await supaClient
             .from('user_procedure_preferences')
             .update({ display_column: null, display_row: null })
@@ -149,7 +145,6 @@ async function saveLayout(showAlert = true) {
 
         if (clearError) throw clearError;
 
-        // 3. "Place the cards": Now that all positions are free, upsert the new layout.
         if (layoutData.length > 0) {
             const { error: upsertError } = await supaClient
                 .from('user_procedure_preferences')
@@ -196,10 +191,6 @@ async function deleteColumn(columnIdToDelete) {
     await saveLayout(false);
 }
 
-
-
-// Reset layout functionality
-// New and corrected reset layout function
 resetLayoutButton.addEventListener('click', async () => {
     const { data: { user } } = await supaClient.auth.getUser();
     if (!user) {
@@ -214,7 +205,6 @@ resetLayoutButton.addEventListener('click', async () => {
     try {
         console.log("Resetting user data to default...");
 
-        // Step 1: Delete the user's existing preferences and columns first.
         const { error: deletePrefsError } = await supaClient
             .from('user_procedure_preferences')
             .delete()
@@ -229,7 +219,6 @@ resetLayoutButton.addEventListener('click', async () => {
 
         console.log("Existing data deleted. Populating defaults...");
 
-        // Step 2: Now that the tables are clean, call the setup function to insert the defaults.
         const success = await setupNewUser(user.id);
         if (!success) {
             throw new Error("Failed to populate default settings after reset.");
@@ -237,7 +226,6 @@ resetLayoutButton.addEventListener('click', async () => {
 
         alert('Layout has been reset to default.');
         
-        // Step 3: Reload the UI to show the new default layout.
         loadProcedures();
 
     } catch (error) {
@@ -246,7 +234,6 @@ resetLayoutButton.addEventListener('click', async () => {
     }
 });
 
-// Clear all counts functionality
 clearCountsButton.addEventListener('click', async () => {
     const isConfirmed = confirm('Are you sure you want to clear all counts for the current shift? This cannot be undone.');
     if (!isConfirmed) {
@@ -277,7 +264,6 @@ clearCountsButton.addEventListener('click', async () => {
     updateDashboard();
 });
 
-// Add column functionality
 addColumnButton.addEventListener('click', async () => {
     const { data: { user } } = await supaClient.auth.getUser();
     if (!user) {
@@ -361,6 +347,7 @@ async function getOrCreateActiveShift() {
         return null;
     }
 
+    // *** THIS IS THE MODIFIED BLOCK ***
     if (existingShift) {
         activeShiftId = existingShift.id;
         shiftTitleInput.value = existingShift.shift_title || '';
@@ -380,7 +367,9 @@ async function getOrCreateActiveShift() {
         }
         return activeShiftId;
     } else {
-        window.location.href = 'start.html';
+        // Instead of redirecting, log an error. This breaks the loop.
+        console.error("CRITICAL: Main page loaded, but no active shift was found.");
+        alert("Error: Could not load your active shift. Please try logging out and back in.");
         return null;
     }
 }
@@ -658,32 +647,41 @@ function attachEventListeners() {
 }
 
 async function initializeApp() {
-    sessionStorage.removeItem('targetColumnDisplayOrder');
-    const { data: { user } } = await supaClient.auth.getUser();
-    if (!user) {
-        window.location.href = 'index.html';
-        return;
-    }
+    try {
+        // Fetch config and initialize client first
+        const response = await fetch('/config');
+        const config = await response.json();
+        supaClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
 
-    // Check if user preferences exist
-    const { data: prefs, error } = await supaClient
-        .from('user_procedure_preferences')
-        .select('user_id', { count: 'exact' })
-        .eq('user_id', user.id);
-    
-    if (error) {
-        console.error("Could not check user preferences:", error.message);
-        return;
-    }
+        // Now proceed with the rest of the original logic
+        sessionStorage.removeItem('targetColumnDisplayOrder');
+        const { data: { user } } = await supaClient.auth.getUser();
+        if (!user) {
+            window.location.href = 'index.html';
+            return;
+        }
 
-    // If the user has no preferences, run the one-time setup
-    if (prefs.length === 0) {
-        await setupNewUser(user.id);
+        const { data: prefs, error } = await supaClient
+            .from('user_procedure_preferences')
+            .select('user_id', { count: 'exact' })
+            .eq('user_id', user.id);
+        
+        if (error) {
+            console.error("Could not check user preferences:", error.message);
+            return;
+        }
+
+        if (prefs.length === 0) {
+            await setupNewUser(user.id);
+        }
+        
+        await getOrCreateActiveShift();
+        await loadProcedures();
+
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        // Optionally, show an error message to the user on the page
     }
-    
-    // Now that we know the user is set up, proceed with normal app loading
-    await getOrCreateActiveShift();
-    await loadProcedures();
 }
 
 initializeApp();
