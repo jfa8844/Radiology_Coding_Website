@@ -1,12 +1,82 @@
-// Supabase initialization
-const SUPABASE_URL = 'https://byvclyemwwoxhhzsfwrh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5dmNseWVtd3dveGhoenNmd3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NjYwNzYsImV4cCI6MjA3MTA0MjA3Nn0.6Wy4Xm02bskAZPXMJMudWgtoUqlZNIp0UDAQibr3jwM';
-const supaClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// history.js
 
 // DOM element references
 const logoutButton = document.getElementById('logout-btn');
 const historyTableBody = document.getElementById('history-table-body');
 const exportCsvButton = document.getElementById('export-csv-btn');
+
+let supaClient; // Declare Supabase client at the top level
+
+// Main function to initialize the page
+async function initializeHistoryPage() {
+    try {
+        // Fetch config and initialize the client first
+        const response = await fetch('/config');
+        const config = await response.json();
+        supaClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+
+        // Once the client is ready, run the page logic
+        await checkUserSession();
+        await loadHistory();
+        attachEventListeners();
+
+    } catch (error) {
+        console.error('Failed to initialize history page:', error);
+        // Optionally, display an error message to the user on the page
+    }
+}
+
+function attachEventListeners() {
+    // Event listener for clicking on a shift row
+    historyTableBody.addEventListener('click', (event) => {
+        const row = event.target.closest('tr');
+        if (row && row.dataset.shiftId) {
+            const shiftId = row.dataset.shiftId;
+            window.location.href = `shift-detail.html?shift_id=${shiftId}`;
+        }
+    });
+
+    // Logout functionality
+    logoutButton.addEventListener('click', async () => {
+        await supaClient.auth.signOut();
+        window.location.href = 'index.html';
+    });
+
+    // Export to CSV functionality
+    exportCsvButton.addEventListener('click', () => {
+        const table = document.getElementById('history-table');
+        const rows = table.querySelectorAll('tr');
+        let csvContent = '';
+
+        // Add header row
+        const headers = [];
+        rows[0].querySelectorAll('th').forEach(header => {
+            headers.push(`"${header.innerText}"`); // Wrap headers in quotes
+        });
+        csvContent += headers.join(',') + '\n';
+
+        // Add data rows
+        for (let i = 1; i < rows.length; i++) {
+            const row = [];
+            rows[i].querySelectorAll('td').forEach(cell => {
+                // Wrap each cell's content in quotes to handle commas within the data
+                row.push(`"${cell.innerText.replace(/"/g, '""')}"`);
+            });
+            csvContent += row.join(',') + '\n';
+        }
+
+        // Trigger download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'radticker_history.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+}
 
 // Check for user session
 async function checkUserSession() {
@@ -53,59 +123,5 @@ async function loadHistory() {
     });
 }
 
-// Event listener for clicking on a shift row
-historyTableBody.addEventListener('click', (event) => {
-    const row = event.target.closest('tr');
-    if (row && row.dataset.shiftId) {
-        const shiftId = row.dataset.shiftId;
-        window.location.href = `shift-detail.html?shift_id=${shiftId}`;
-    }
-});
-
-// Logout functionality
-logoutButton.addEventListener('click', async () => {
-    await supaClient.auth.signOut();
-    window.location.href = 'index.html';
-});
-
-// Export to CSV functionality
-exportCsvButton.addEventListener('click', () => {
-    const table = document.getElementById('history-table');
-    const rows = table.querySelectorAll('tr');
-    let csvContent = '';
-
-    // Add header row
-    const headers = [];
-    rows[0].querySelectorAll('th').forEach(header => {
-        headers.push(header.innerText);
-    });
-    csvContent += headers.join(',') + '\n';
-
-    // Add data rows
-    for (let i = 1; i < rows.length; i++) {
-        const row = [];
-        rows[i].querySelectorAll('td').forEach(cell => {
-            row.push(cell.innerText);
-        });
-        csvContent += row.join(',') + '\n';
-    }
-
-    // Trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'radticker_history.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-});
-
-// Initial load
-async function initializeApp() {
-    await checkUserSession();
-    await loadHistory();
-}
-
-initializeApp();
+// Start the page initialization process
+initializeHistoryPage();
