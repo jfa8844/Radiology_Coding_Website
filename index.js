@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 const app = express();
 const port = 3000;
 
@@ -10,9 +10,21 @@ app.use(express.static(path.join(__dirname)));
 
 // NEW: Add an endpoint to provide the Supabase config to the client
 app.get('/config', (req, res) => {
+  let supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+  // If running in a GitHub Codespace, override the URL for the client.
+  // This is necessary because the client needs the public URL, not the internal one.
+  if (process.env.CODESPACE_NAME) {
+    const codespaceName = process.env.CODESPACE_NAME;
+    const domain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+    // The Supabase API is on port 54321
+    supabaseUrl = `https://${codespaceName}-54321.${domain}`;
+  }
+
   res.json({
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY
+    supabaseUrl: supabaseUrl,
+    supabaseAnonKey: supabaseAnonKey
   });
 });
 
