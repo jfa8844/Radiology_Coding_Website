@@ -1,6 +1,6 @@
-require('dotenv').config();
 const express = require('express');
 const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 const app = express();
 const port = 3000;
 
@@ -17,11 +17,22 @@ app.get('/config', (req, res) => {
 });
 
 
+const supabase = require('./lib/supabaseClient'); // Import the server-side client
+
 app.get('/test', async (req, res) => {
-  // This route will now fail because we removed the supabase client.
-  // If you need server-side supabase access, you would re-import it
-  // from a file that ALSO uses the environment variables.
-  res.send("Test route is disabled for now.");
+  // This route now uses the server-side Supabase client to test the connection.
+  const { data, error } = await supabase.from('procedures').select('id').limit(1);
+
+  if (error) {
+    console.error('Supabase query error:', error);
+    return res.status(500).json({ error: 'Failed to connect to Supabase.', details: error.message });
+  }
+
+  if (data) {
+    res.json({ success: true, message: 'Successfully connected to Supabase and fetched data.', data });
+  } else {
+    res.status(404).json({ error: 'Could not fetch test data from Supabase.' });
+  }
 });
 
 app.listen(port, () => {
