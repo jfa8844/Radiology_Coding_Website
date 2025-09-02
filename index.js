@@ -7,13 +7,28 @@ const port = 3000;
 // This line tells Express to serve any static files from the same directory this script is in
 // This will make index.html, signup.html, and style.css available.
 app.use(express.static(path.join(__dirname)));
+app.use(express.json()); // Middleware to parse JSON bodies
 
-// NEW: Add an endpoint to provide the Supabase config to the client
-app.get('/config', (req, res) => {
-  res.json({
-    supabaseUrl: process.env.SUPABASE_URL,
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY
+// The /config endpoint is no longer needed as the client does not connect to Supabase directly.
+
+// NEW: Add an endpoint for the client to proxy authentication requests
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
   });
+
+  if (error) {
+    return res.status(error.status || 500).json({ error: error.message });
+  }
+
+  res.json({ data });
 });
 
 

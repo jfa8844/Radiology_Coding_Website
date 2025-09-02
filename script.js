@@ -4,22 +4,9 @@ const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 const errorMessage = document.getElementById('error-message');
 
-let supaClient; // Declare supaClient here
-
-// NEW: Create an async function to initialize the app
-async function initializeApp() {
-    try {
-        const response = await fetch('/config');
-        const config = await response.json();
-        supaClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-        
-        // Add the event listener AFTER the client is initialized
-        loginForm.addEventListener('submit', handleLogin);
-    } catch (error) {
-        console.error('Failed to initialize Supabase client:', error);
-        errorMessage.textContent = 'Error: Could not load application configuration.';
-    }
-}
+// No longer need to initialize a client-side Supabase instance for login.
+// The login is now handled by the backend.
+loginForm.addEventListener('submit', handleLogin);
 
 // NEW: Move the login logic into its own function
 async function handleLogin(event) {
@@ -29,21 +16,31 @@ async function handleLogin(event) {
     const email = emailInput.value;
     const password = passwordInput.value;
 
-    const { data, error } = await supaClient.auth.signInWithPassword({
-        email: email,
-        password: password,
-    });
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
 
-    if (error) {
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Login failed');
+        }
+
+        console.log('Login successful:', result.data.user);
+        // On successful login, the server sends back the session/user data.
+        // We can now redirect the user.
+        window.location.href = 'start.html';
+    } catch (error) {
         errorMessage.textContent = `Error: ${error.message}`;
         console.error('Login failed:', error);
-    } else if (data.user) {
-        console.log('Login successful:', data.user);
-        window.location.href = 'start.html'; // Redirect to start.html, not main.html
     }
 }
 
-// Start the initialization process
-initializeApp();
+// The event listener is now added directly, so no initialization function is needed.
 
 
