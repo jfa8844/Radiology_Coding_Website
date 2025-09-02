@@ -29,10 +29,17 @@ async function initializeHistoryPage() {
 function attachEventListeners() {
     // Event listener for clicking on a shift row
     historyTableBody.addEventListener('click', (event) => {
-        const row = event.target.closest('tr');
-        if (row && row.dataset.shiftId) {
-            const shiftId = row.dataset.shiftId;
+        const target = event.target;
+        const shiftId = target.closest('tr').dataset.shiftId;
+
+        if (target.classList.contains('menu-btn')) {
+            toggleMenu(target);
+        } else if (target.classList.contains('details-btn')) {
             window.location.href = `shift-detail.html?shift_id=${shiftId}`;
+        } else if (target.classList.contains('delete-btn')) {
+            if (confirm('Are you sure you want to delete this shift? This action is permanent.')) {
+                deleteShift(shiftId);
+            }
         }
     });
 
@@ -107,7 +114,6 @@ async function loadHistory() {
     shifts.forEach(shift => {
         const row = document.createElement('tr');
         row.setAttribute('data-shift-id', shift.id);
-        row.style.cursor = 'pointer';
 
         const startDate = new Date(shift.shift_start_time).toLocaleDateString();
 
@@ -118,9 +124,37 @@ async function loadHistory() {
             <td style="padding: 12px; border: 1px solid var(--border-primary);">${shift.shift_length_hours || ''}</td>
             <td style="padding: 12px; border: 1px solid var(--border-primary);">${shift.total_wrvu ? shift.total_wrvu.toFixed(2) : '0.00'}</td>
             <td style="padding: 12px; border: 1px solid var(--border-primary);">${shift.actual_wrvu_per_hour ? shift.actual_wrvu_per_hour.toFixed(2) : '0.00'}</td>
+            <td style="padding: 12px; border: 1px solid var(--border-primary); position: relative;">
+                <button class="menu-btn">☰</button>
+                <div class="menu">
+                    <a href="#" class="details-btn">Shift Details</a>
+                    <a href="#" class="delete-btn">Delete Shift</a>
+                </div>
+            </td>
         `;
         historyTableBody.appendChild(row);
     });
+}
+
+function toggleMenu(btn) {
+    const menu = btn.nextElementSibling;
+    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+}
+
+async function deleteShift(shiftId) {
+    // due to "ON DELETE CASCADE" in the database schema, we only need to delete the shift
+    // and all associated shift_entries will be deleted automatically.
+    const { error } = await supaClient
+        .from('shifts')
+        .delete()
+        .eq('id', shiftId);
+
+    if (error) {
+        console.error('Error deleting shift:', error);
+        return;
+    }
+
+    loadHistory();
 }
 
 // Start the page initialization process
