@@ -1,8 +1,8 @@
 [auth]
 # This sets the main site URL for the Supabase instance.
 # It's used for constructing redirect URLs and is a primary check for CORS.
-site_url = "https://silver-space-eureka-97wvrpx567942rjx-3000.app.github.dev"
+site_url = "http://localhost:3000"
 
 # This is an allow-list for additional redirect URLs.
 # We add the frontend's URL here to ensure that Supabase allows redirects back to your application after authentication.
-additional_redirect_urls = ["https://silver-space-eureka-97wvrpx567942rjx-3000.app.github.dev"]
+additional_redirect_urls = ["http://localhost:3000"]
