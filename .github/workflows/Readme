@@ -1,0 +1,31 @@
+Supabase Database Migrations CI/CD
+This repository is configured with a GitHub Action (/.github/workflows/supabase-migrations.yml) to automatically deploy database migrations to our production Supabase project.
+
+How It Works
+Trigger: The workflow runs automatically whenever new commits are pushed to the main branch.
+
+Supabase CLI: It uses the official Supabase CLI to connect to our project.
+
+Deployment: It executes the supabase db push command, which applies any new migration files found in the supabase/migrations directory to the remote database.
+
+Local Development Workflow
+To create a new migration, follow these steps locally:
+
+Ensure your local Supabase server is running:
+
+supabase start
+
+Create a new migration file: Give it a descriptive name.
+
+supabase migration new your_migration_name
+
+Edit the new SQL file: Open the newly created file in supabase/migrations/ and add your SQL statements (e.g., CREATE TABLE, ALTER TABLE, etc.).
+
+Apply the migration locally to test it:
+
+supabase db reset
+
+Commit and Push: Once you've verified your changes, commit the new migration file to Git and push it. When your pull request is merged into main, the GitHub Action will automatically deploy it.
+
+Credentials
+All necessary credentials (Access Token, Project ID, and DB Password) are stored securely as GitHub Actions Secrets and are not exposed in the workflow file.

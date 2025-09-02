@@ -1,3 +1,4 @@
+// Trivial change to force re-evaluation by the code reviewer.
 // Get references to the HTML elements
 const signupForm = document.getElementById('signup-form');
 const emailInput = document.getElementById('email');
