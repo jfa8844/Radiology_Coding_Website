@@ -43,7 +43,7 @@ jobs:
           # The hostname is region-specific. If your project is not in 'us-east-1',
           # you will need to update the region in the hostname below.
           # You can find your project's region and connection string in your Supabase dashboard.
-          DB_URL="postgres://postgres.${SUPABASE_PROJECT_ID}:${SUPABASE_DB_PASSWORD}@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+          DB_URL="postgres://postgres.${SUPABASE_PROJECT_ID}:${SUPABASE_DB_PASSWORD}@aws-1-us-east-2.pooler.supabase.com:5432/postgres"
 
           # Use a loop to retry the connection in case of transient network errors.
           until supabase db push --db-url "$DB_URL" || [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; do
