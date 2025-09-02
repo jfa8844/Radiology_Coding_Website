@@ -4,7 +4,7 @@
 # Workflow Steps:
 # 1. Checks out the repository's code.
 # 2. Sets up the Supabase CLI in the runner environment.
-# 3. Pushes the database migrations using the credentials stored in GitHub Secrets.
+# 3. Pushes the database migrations directly using the database connection URL.
 
 name: Push Supabase Migrations
 
@@ -30,13 +30,12 @@ jobs:
         env:
           # Your Supabase access token, stored as a GitHub Secret
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          # Your Supabase project ID, stored as a GitHub Secret
-          SUPABASE_PROJECT_ID: ${{ secrets.PROJECT_ID }}
-          # The database password, which the Supabase CLI needs to connect
+          # The database password, which is used to construct the DB URL
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          # Your Supabase project ID, used to construct the DB URL
+          SUPABASE_PROJECT_ID: ${{ secrets.PROJECT_ID }}
         run: |
-          # The Supabase CLI requires the project ID to be available.
-          # We link the project first and then push the migrations.
-          # The --non-interactive flag is crucial for running in a CI/CD environment.
-          supabase link --project-ref $SUPABASE_PROJECT_ID --non-interactive
-          supabase db push
+          # Push migrations directly to the database using the connection URL.
+          # This is the recommended non-interactive method for CI/CD.
+          supabase db push --db-url "postgres://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+
