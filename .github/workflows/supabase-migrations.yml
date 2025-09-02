@@ -32,11 +32,19 @@ jobs:
       - name: Resolve Supabase DB IP Address
         id: resolve_ip
         run: |
+          # Print the domain we are querying for better debugging.
+          echo "Attempting to resolve DNS for: db.${{ secrets.PROJECT_ID }}.supabase.co"
+
           # The GitHub runner tries to connect via IPv6, which can fail.
           # We resolve the IPv4 address first and use it directly to ensure a stable connection.
           IP=$(dig +short A db.${{ secrets.PROJECT_ID }}.supabase.co | tail -n1)
           if [ -z "$IP" ]; then
-            echo "::error::Could not resolve the Supabase DB IP address. Check that the PROJECT_ID secret is correct."
+            echo "::error::Could not resolve the Supabase DB IP address using 'dig'. This typically means the PROJECT_ID secret is incorrect."
+            echo "::error::Please go to your GitHub repository's Settings > Secrets and variables > Actions, and ensure the PROJECT_ID is correct."
+
+            echo "::debug::For more detailed diagnostics, running 'nslookup'..."
+            nslookup db.${{ secrets.PROJECT_ID }}.supabase.co
+
             exit 1
           fi
           echo "Resolved Supabase DB IP: $IP"
