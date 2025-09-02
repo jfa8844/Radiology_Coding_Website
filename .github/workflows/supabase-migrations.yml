@@ -1,10 +1,12 @@
 # This GitHub Action workflow is triggered on every push to the 'main' branch.
+# It can also be triggered manually from the GitHub Actions tab.
 # It uses the Supabase CLI to deploy any new database migrations to your Supabase project.
 #
 # Workflow Steps:
 # 1. Checks out the repository's code.
 # 2. Sets up the Supabase CLI in the runner environment.
-# 3. Pushes the database migrations directly using the database connection URL.
+# 3. Resolves the database's IPv4 address to avoid potential IPv6 connection issues.
+# 4. Pushes the database migrations directly using the resolved IP address.
 
 name: Push Supabase Migrations
 
@@ -12,6 +14,7 @@ on:
   push:
     branches:
       - main # This action runs only on pushes to the main branch
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
 
 jobs:
   push_migrations:
@@ -26,16 +29,27 @@ jobs:
         with:
           version: latest # Use the latest version of the Supabase CLI
 
+      - name: Resolve Supabase DB IP Address
+        id: resolve_ip
+        run: |
+          # The GitHub runner tries to connect via IPv6, which can fail.
+          # We resolve the IPv4 address first and use it directly to ensure a stable connection.
+          IP=$(dig +short A db.${{ secrets.PROJECT_ID }}.supabase.co | tail -n1)
+          if [ -z "$IP" ]; then
+            echo "::error::Could not resolve the Supabase DB IP address. Check that the PROJECT_ID secret is correct."
+            exit 1
+          fi
+          echo "Resolved Supabase DB IP: $IP"
+          echo "SUPABASE_DB_IP=$IP" >> $GITHUB_ENV
+
       - name: Push Database Migrations
         env:
           # Your Supabase access token, stored as a GitHub Secret
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           # The database password, which is used to construct the DB URL
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          # Your Supabase project ID, used to construct the DB URL
-          SUPABASE_PROJECT_ID: ${{ secrets.PROJECT_ID }}
         run: |
           # Push migrations directly to the database using the connection URL.
-          # This is the recommended non-interactive method for CI/CD.
-          supabase db push --db-url "postgres://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+          # We use the resolved IPv4 address from the previous step to prevent IPv6 issues.
+          supabase db push --db-url "postgres://postgres:${SUPABASE_DB_PASSWORD}@${{ env.SUPABASE_DB_IP }}:5432/postgres"
 
