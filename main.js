@@ -61,6 +61,7 @@ const logoutButton = document.getElementById('logout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
 const clearCountsButton = document.getElementById('clear-counts-btn');
 const addColumnButton = document.getElementById('add-column-btn');
+const addDividerButton = document.getElementById('add-divider-btn');
 const endShiftButton = document.getElementById('end-shift-btn');
 const shiftTitleInput = document.getElementById('shift-title');
 const shiftTypeInput = document.getElementById('shift-type');
@@ -121,42 +122,60 @@ async function saveLayout(showAlert = true) {
         return;
     }
 
-    const layoutData = [];
+    const cardLayoutData = [];
+    const dividerLayoutData = [];
     const columns = document.querySelectorAll('.procedure-grid .grid-column');
+
     columns.forEach((column, columnIndex) => {
-        const cards = column.querySelectorAll('.procedure-card');
-        cards.forEach((card, rowIndex) => {
-            const procedureId = card.getAttribute('data-procedure-id');
-            layoutData.push({
-                user_id: user.id,
-                procedure_id: parseInt(procedureId),
-                display_row: rowIndex + 1,
-                display_column: columnIndex + 1,
-                is_visible: true
-            });
+        const items = column.querySelectorAll('.procedure-card, .divider-card');
+        items.forEach((item, rowIndex) => {
+            const procedureId = item.getAttribute('data-procedure-id');
+            const dividerId = item.getAttribute('data-divider-id');
+
+            if (dividerId) {
+                dividerLayoutData.push({
+                    id: parseInt(dividerId),
+                    user_id: user.id,
+                    display_row: rowIndex + 1,
+                    display_column: columnIndex + 1,
+                });
+            } else if (procedureId) {
+                cardLayoutData.push({
+                    user_id: user.id,
+                    procedure_id: parseInt(procedureId),
+                    display_row: rowIndex + 1,
+                    display_column: columnIndex + 1,
+                    is_visible: true
+                });
+            }
         });
     });
 
     try {
+        const promises = [];
+
+        // Clear all card positions for the user first
         const { error: clearError } = await supaClient
             .from('user_procedure_preferences')
             .update({ display_column: null, display_row: null })
             .eq('user_id', user.id);
-
         if (clearError) throw clearError;
 
-        if (layoutData.length > 0) {
-            const { error: upsertError } = await supaClient
-                .from('user_procedure_preferences')
-                .upsert(layoutData, { onConflict: 'user_id, procedure_id' });
-
-            if (upsertError) throw upsertError;
+        // Upsert the new card positions
+        if (cardLayoutData.length > 0) {
+            promises.push(supaClient.from('user_procedure_preferences').upsert(cardLayoutData, { onConflict: 'user_id, procedure_id' }));
         }
+
+        // Upsert the new divider positions
+        if (dividerLayoutData.length > 0) {
+            promises.push(supaClient.from('user_dividers').upsert(dividerLayoutData));
+        }
+
+        const results = await Promise.all(promises.map(p => p.then(res => res.error ? Promise.reject(res.error) : res)));
 
         if (showAlert) {
             alert('Layout saved successfully!');
         }
-
     } catch (error) {
         console.error('Error saving layout:', error);
         if (showAlert) alert(`Error saving layout: ${error.message}`);
@@ -205,17 +224,16 @@ resetLayoutButton.addEventListener('click', async () => {
     try {
         console.log("Resetting user data to default...");
 
-        const { error: deletePrefsError } = await supaClient
-            .from('user_procedure_preferences')
-            .delete()
-            .eq('user_id', user.id);
-        if (deletePrefsError) throw deletePrefsError;
+        // Delete all user-specific data
+        const [prefsResult, colsResult, dividersResult] = await Promise.all([
+            supaClient.from('user_procedure_preferences').delete().eq('user_id', user.id),
+            supaClient.from('user_columns').delete().eq('user_id', user.id),
+            supaClient.from('user_dividers').delete().eq('user_id', user.id)
+        ]);
 
-        const { error: deleteColsError } = await supaClient
-            .from('user_columns')
-            .delete()
-            .eq('user_id', user.id);
-        if (deleteColsError) throw deleteColsError;
+        if (prefsResult.error) throw prefsResult.error;
+        if (colsResult.error) throw colsResult.error;
+        if (dividersResult.error) throw dividersResult.error;
 
         console.log("Existing data deleted. Populating defaults...");
 
@@ -226,7 +244,7 @@ resetLayoutButton.addEventListener('click', async () => {
 
         alert('Layout has been reset to default.');
         
-        loadProcedures();
+        loadGridItems();
 
     } catch (error) {
         console.error('Error resetting layout:', error);
@@ -315,7 +333,7 @@ addColumnButton.addEventListener('click', async () => {
         ghostClass: 'sortable-ghost',
         filter: '.column-placeholder',
         onEnd: function(evt) {
-            if (evt.from.querySelectorAll('.procedure-card').length === 0) {
+            if (evt.from.querySelectorAll('.procedure-card, .divider-card').length === 0) {
                 const fromPlaceholder = evt.from.querySelector('.column-placeholder');
                 if (fromPlaceholder) fromPlaceholder.style.display = 'flex';
             }
@@ -325,6 +343,56 @@ addColumnButton.addEventListener('click', async () => {
         }
     });
 });
+
+async function addDivider() {
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) {
+        alert('You must be logged in to add a divider.');
+        return;
+    }
+
+    try {
+        const { error } = await supaClient
+            .from('user_dividers')
+            .insert({
+                user_id: user.id,
+                display_column: 1, // Default position
+                display_row: 999    // Place at the end of the column
+            });
+
+        if (error) throw error;
+        await loadGridItems();
+
+    } catch (error) {
+        console.error('Error adding divider:', error);
+        alert(`Failed to add divider: ${error.message}`);
+    }
+}
+
+async function deleteDivider(dividerId) {
+    if (!confirm('Are you sure you want to delete this divider?')) {
+        return;
+    }
+
+    try {
+        const { error } = await supaClient
+            .from('user_dividers')
+            .delete()
+            .eq('id', dividerId);
+
+        if (error) throw error;
+
+        const dividerElement = document.querySelector(`.divider-card[data-divider-id="${dividerId}"]`);
+        if (dividerElement) {
+            dividerElement.remove();
+        }
+        await saveLayout(false);
+
+    } catch (error) {
+        console.error('Error deleting divider:', error);
+        alert(`Failed to delete divider: ${error.message}`);
+    }
+}
 
 async function getOrCreateActiveShift() {
     if (activeShiftId) return activeShiftId;
@@ -475,7 +543,7 @@ function updateDashboard() {
     paceValue.textContent = `${sign}${hours}h ${minutes}m`;
 }
 
-async function loadProcedures() {
+async function loadGridItems() {
     const procedureGrid = document.querySelector('.procedure-grid');
     procedureGrid.innerHTML = '';
 
@@ -488,16 +556,29 @@ async function loadProcedures() {
 
     const { data: { user } } = await supaClient.auth.getUser();
     if (!user) {
-        console.warn("No user is logged in. Cannot load procedures.");
+        console.warn("No user is logged in. Cannot load grid items.");
         return;
     }
 
-    const { data: preferences, error: prefError } = await supaClient.from('user_procedure_preferences').select('procedure_id, display_row, display_column').eq('user_id', user.id).eq('is_visible', true);
-    if (prefError) {
-        console.error('Error fetching user preferences:', prefError);
+    // Fetch preferences and dividers in parallel
+    const [prefsResult, dividersResult] = await Promise.all([
+        supaClient.from('user_procedure_preferences').select('procedure_id, display_row, display_column').eq('user_id', user.id).eq('is_visible', true),
+        supaClient.from('user_dividers').select('id, display_row, display_column').eq('user_id', user.id)
+    ]);
+
+    if (prefsResult.error) {
+        console.error('Error fetching user preferences:', prefsResult.error);
+        return;
+    }
+    if (dividersResult.error) {
+        console.error('Error fetching user dividers:', dividersResult.error);
         return;
     }
 
+    const preferences = prefsResult.data;
+    const dividers = dividersResult.data;
+
+    // Fetch details for only the visible procedures
     const visibleProcedureIds = preferences.map(p => p.procedure_id);
     let procedureData = [];
     if (visibleProcedureIds.length > 0) {
@@ -509,14 +590,20 @@ async function loadProcedures() {
         procedureData = data;
     }
 
-    const procedureDetails = procedureData.map(proc => {
+    // Combine cards and dividers into a single list of grid items
+    const cardItems = procedureData.map(proc => {
         const pref = preferences.find(p => p.procedure_id === proc.id);
-        return { ...proc, display_row: pref.display_row, display_column: pref.display_column };
-    }).sort((a, b) => {
-        if (a.display_column !== b.display_column) return a.display_column - b.display_column;
-        return a.display_row - b.display_row;
+        return { ...proc, ...pref, type: 'card' };
     });
 
+    const dividerItems = dividers.map(div => ({ ...div, type: 'divider' }));
+
+    const gridItems = [...cardItems, ...dividerItems].sort((a, b) => {
+        if (a.display_column !== b.display_column) return (a.display_column || 0) - (b.display_column || 0);
+        return (a.display_row || 0) - (b.display_row || 0);
+    });
+
+    // Render columns
     let { data: userColumns, error: columnsError } = await supaClient.from('user_columns').select('*').eq('user_id', user.id).order('display_order');
     if (columnsError) {
         console.error('Error fetching user columns:', columnsError);
@@ -541,35 +628,44 @@ async function loadProcedures() {
         procedureGrid.appendChild(column);
     });
 
+    // Render grid items into columns
     const columns = procedureGrid.querySelectorAll('.grid-column');
-    procedureDetails.forEach(procedure => {
+    gridItems.forEach(item => {
         const card = document.createElement('div');
-        card.className = 'procedure-card';
-        card.setAttribute('data-procedure-id', procedure.id);
-        card.setAttribute('data-wrvu', procedure.wrvu);
-        card.setAttribute('data-modality', procedure.modality);
-        const entry = shiftEntries.find(e => e.procedure_id === procedure.id);
-        const count = entry ? entry.count : 0;
-        card.innerHTML = `
-            <div class="card-header"><h3>${procedure.abbreviation} (${procedure.wrvu})</h3></div>
-            <div class="card-controls">
-                <div class="case-count">${count}</div>
-                <button class="increment-btn">+</button>
-            </div>`;
-        const columnIndex = procedure.display_column - 1;
+        if (item.type === 'divider') {
+            card.className = 'divider-card';
+            card.setAttribute('data-divider-id', item.id);
+            card.innerHTML = `<div class="divider-delete-btn" data-divider-id="${item.id}">&times;</div>`;
+        } else {
+            card.className = 'procedure-card';
+            card.setAttribute('data-procedure-id', item.id);
+            card.setAttribute('data-wrvu', item.wrvu);
+            card.setAttribute('data-modality', item.modality);
+            const entry = shiftEntries.find(e => e.procedure_id === item.id);
+            const count = entry ? entry.count : 0;
+            card.innerHTML = `
+                <div class="card-header"><h3>${item.abbreviation} (${item.wrvu})</h3></div>
+                <div class="card-controls">
+                    <div class="case-count">${count}</div>
+                    <button class="increment-btn">+</button>
+                </div>`;
+        }
+
+        const columnIndex = item.display_column - 1;
         if (columns[columnIndex]) {
             columns[columnIndex].appendChild(card);
         } else {
-            if (columns[0]) columns[0].appendChild(card);
+            if (columns[0]) columns[0].appendChild(card); // Fallback to first column
         }
     });
 
+    // Initialize SortableJS on columns
     document.querySelectorAll('.grid-column').forEach(column => {
         const placeholder = document.createElement('div');
         placeholder.className = 'column-placeholder';
         placeholder.textContent = 'Drag cards here';
         column.appendChild(placeholder);
-        if (column.querySelectorAll('.procedure-card').length > 0) {
+        if (column.querySelectorAll('.procedure-card, .divider-card').length > 0) {
             placeholder.style.display = 'none';
         }
         new Sortable(column, {
@@ -578,7 +674,7 @@ async function loadProcedures() {
             ghostClass: 'sortable-ghost',
             filter: '.column-placeholder',
             onEnd: function(evt) {
-                if (evt.from.querySelectorAll('.procedure-card').length === 0) {
+                if (evt.from.querySelectorAll('.procedure-card, .divider-card').length === 0) {
                     const fromPlaceholder = evt.from.querySelector('.column-placeholder');
                     if (fromPlaceholder) fromPlaceholder.style.display = 'flex';
                 }
@@ -603,6 +699,14 @@ function attachEventListeners() {
             updateDashboard();
             const procedureId = card.getAttribute('data-procedure-id');
             updateProcedureCount(procedureId, newCount);
+        });
+    });
+
+    document.querySelectorAll('.divider-delete-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dividerId = e.target.getAttribute('data-divider-id');
+            deleteDivider(dividerId);
         });
     });
 
@@ -676,7 +780,7 @@ async function initializeApp() {
         }
         
         await getOrCreateActiveShift();
-        await loadProcedures();
+        await loadGridItems();
 
     } catch (error) {
         console.error('Initialization failed:', error);
@@ -685,5 +789,7 @@ async function initializeApp() {
 }
 
 initializeApp();
+
+addDividerButton.addEventListener('click', addDivider);
 
 setInterval(updateDashboard, 60000);
