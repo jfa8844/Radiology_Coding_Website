@@ -85,6 +85,39 @@ h1 {
     box-shadow: 0 0 0 2px var(--accent-primary-shadow);
 }
 
+/* Menu Button and Menu */
+.menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 40px;
+    background-color: var(--background-input);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    padding: 8px;
+    z-index: 10;
+    min-width: 150px;
+}
+
+.menu a {
+    display: block;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.menu a:hover {
+    background-color: var(--accent-primary);
+}
+
 button {
     padding: 12px;
     background-color: var(--accent-primary);
