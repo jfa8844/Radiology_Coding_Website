@@ -39,7 +39,29 @@ async function handleLogin(event) {
         console.error('Login failed:', error);
     } else if (data.user) {
         console.log('Login successful:', data.user);
-        window.location.href = 'start.html'; // Redirect to start.html, not main.html
+
+        // Check for an active shift
+        const { data: activeShift, error: shiftError } = await supaClient
+            .from('shifts')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .is('shift_end_time', null)
+            .limit(1)
+            .single();
+
+        if (shiftError && shiftError.code !== 'PGRST116') { // PGRST116: "The query returned no rows" which is not an error here
+            console.error('Error checking for active shift:', shiftError);
+            errorMessage.textContent = 'Error checking for active shift.';
+            return;
+        }
+
+        if (activeShift) {
+            // If active shift exists, redirect to main page
+            window.location.href = 'main.html';
+        } else {
+            // Otherwise, redirect to the start shift page
+            window.location.href = 'start.html';
+        }
     }
 }
 
