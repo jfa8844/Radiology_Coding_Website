@@ -61,6 +61,7 @@ const logoutButton = document.getElementById('logout-btn');
 const resetLayoutButton = document.getElementById('reset-layout-btn');
 const clearCountsButton = document.getElementById('clear-counts-btn');
 const addColumnButton = document.getElementById('add-column-btn');
+const addDividerButton = document.getElementById('add-divider-btn');
 const endShiftButton = document.getElementById('end-shift-btn');
 const shiftTitleInput = document.getElementById('shift-title');
 const shiftTypeInput = document.getElementById('shift-type');
@@ -326,6 +327,80 @@ addColumnButton.addEventListener('click', async () => {
     });
 });
 
+async function addDivider() {
+    const { data: { user } } = await supaClient.auth.getUser();
+    if (!user) {
+        alert('You must be logged in to add a divider.');
+        return;
+    }
+
+    try {
+        // Create a new procedure that is a divider
+        const { data: newDividerProcedure, error: createError } = await supaClient
+            .from('procedures')
+            .insert({
+                cpt_code: `DIVIDER_${user.id}_${Date.now()}`,
+                description: 'Visual Divider',
+                is_divider: true,
+                abbreviation: '---', // Placeholder
+                wrvu: 0,
+                modality: 'NONE'
+            })
+            .select()
+            .single();
+
+        if (createError) throw createError;
+
+        // Add a preference for this new divider to make it visible
+        const { error: prefError } = await supaClient
+            .from('user_procedure_preferences')
+            .insert({
+                user_id: user.id,
+                procedure_id: newDividerProcedure.id,
+                is_visible: true,
+                display_column: 1, // Default position
+                display_row: 999 // Place at the end of the column
+            });
+
+        if (prefError) throw prefError;
+
+        // Refresh the grid
+        await loadProcedures();
+
+    } catch (error) {
+        console.error('Error adding divider:', error);
+        alert(`Failed to add divider: ${error.message}`);
+    }
+}
+
+async function deleteDivider(procedureId) {
+    if (!confirm('Are you sure you want to delete this divider?')) {
+        return;
+    }
+
+    try {
+        const { error } = await supaClient
+            .from('procedures')
+            .delete()
+            .eq('id', procedureId);
+
+        if (error) throw error;
+
+        // The ON DELETE CASCADE will handle the user_procedure_preferences entry.
+        // We just need to remove the element from the DOM.
+        const dividerElement = document.querySelector(`.procedure-card[data-procedure-id="${procedureId}"]`);
+        if (dividerElement) {
+            dividerElement.remove();
+        }
+        // No need to reload the whole grid, just save the new layout
+        await saveLayout(false);
+
+    } catch (error) {
+        console.error('Error deleting divider:', error);
+        alert(`Failed to delete divider: ${error.message}`);
+    }
+}
+
 async function getOrCreateActiveShift() {
     if (activeShiftId) return activeShiftId;
 
@@ -501,7 +576,7 @@ async function loadProcedures() {
     const visibleProcedureIds = preferences.map(p => p.procedure_id);
     let procedureData = [];
     if (visibleProcedureIds.length > 0) {
-        const { data, error } = await supaClient.from('procedures').select('id, abbreviation, description, wrvu, modality').in('id', visibleProcedureIds);
+        const { data, error } = await supaClient.from('procedures').select('id, abbreviation, description, wrvu, modality, is_divider').in('id', visibleProcedureIds);
         if (error) {
             console.error('Error fetching procedure details:', error);
             return;
@@ -544,22 +619,30 @@ async function loadProcedures() {
     const columns = procedureGrid.querySelectorAll('.grid-column');
     procedureDetails.forEach(procedure => {
         const card = document.createElement('div');
-        card.className = 'procedure-card';
         card.setAttribute('data-procedure-id', procedure.id);
-        card.setAttribute('data-wrvu', procedure.wrvu);
-        card.setAttribute('data-modality', procedure.modality);
-        const entry = shiftEntries.find(e => e.procedure_id === procedure.id);
-        const count = entry ? entry.count : 0;
-        card.innerHTML = `
-            <div class="card-header"><h3>${procedure.abbreviation} (${procedure.wrvu})</h3></div>
-            <div class="card-controls">
-                <div class="case-count">${count}</div>
-                <button class="increment-btn">+</button>
-            </div>`;
+
+        if (procedure.is_divider) {
+            card.className = 'procedure-card divider-card';
+            card.innerHTML = `<div class="divider-delete-btn" data-procedure-id="${procedure.id}">&times;</div>`;
+        } else {
+            card.className = 'procedure-card';
+            card.setAttribute('data-wrvu', procedure.wrvu);
+            card.setAttribute('data-modality', procedure.modality);
+            const entry = shiftEntries.find(e => e.procedure_id === procedure.id);
+            const count = entry ? entry.count : 0;
+            card.innerHTML = `
+                <div class="card-header"><h3>${procedure.abbreviation} (${procedure.wrvu})</h3></div>
+                <div class="card-controls">
+                    <div class="case-count">${count}</div>
+                    <button class="increment-btn">+</button>
+                </div>`;
+        }
+
         const columnIndex = procedure.display_column - 1;
         if (columns[columnIndex]) {
             columns[columnIndex].appendChild(card);
         } else {
+            // If column doesn't exist, append to the first column as a fallback
             if (columns[0]) columns[0].appendChild(card);
         }
     });
@@ -603,6 +686,14 @@ function attachEventListeners() {
             updateDashboard();
             const procedureId = card.getAttribute('data-procedure-id');
             updateProcedureCount(procedureId, newCount);
+        });
+    });
+
+    document.querySelectorAll('.divider-delete-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card drag
+            const procedureId = e.target.getAttribute('data-procedure-id');
+            deleteDivider(procedureId);
         });
     });
 
@@ -683,6 +774,8 @@ async function initializeApp() {
         // Optionally, show an error message to the user on the page
     }
 }
+
+addDividerButton.addEventListener('click', addDivider);
 
 initializeApp();
 

@@ -85,6 +85,53 @@ h1 {
     box-shadow: 0 0 0 2px var(--accent-primary-shadow);
 }
 
+/* Divider Card Styles */
+.divider-card {
+    background-color: transparent;
+    border: none;
+    border-top: 2px solid var(--border-primary); /* The visible line */
+    height: 10px; /* Small height */
+    min-height: 10px;
+    padding: 0;
+    margin: 5px 0;
+    box-shadow: none;
+    position: relative;
+    cursor: grab;
+}
+
+.divider-card:hover {
+    border-top: 2px solid var(--accent-primary);
+    box-shadow: none;
+}
+
+.divider-delete-btn {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    background: var(--background-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+.divider-card:hover .divider-delete-btn {
+    display: flex; /* Show on hover */
+}
+
+.divider-delete-btn:hover {
+    color: var(--error);
+    border-color: var(--error);
+}
+
 /* Menu Button and Menu */
 .menu-btn {
     background: none;
